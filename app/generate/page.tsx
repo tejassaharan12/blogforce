@@ -835,6 +835,127 @@ function GeneratePageInner() {
               </div>
             </div>
 
+            {/* Generated Content — first thing to read */}
+            <div className="card-glass overflow-hidden">
+              <div className="flex items-center justify-between px-5 py-4 border-b border-white/[0.06]">
+                <p className="text-sm font-display font-semibold text-white">Generated Content</p>
+                <div className="flex gap-2">
+                  <button onClick={copy} className="text-xs px-3.5 py-1.5 rounded-lg bg-white/[0.05] border border-white/[0.08] hover:bg-white/[0.09] text-zinc-300 transition-colors">
+                    {copied ? "Copied!" : "Copy"}
+                  </button>
+                  <button onClick={() => download("md")} className="text-xs px-3 py-1.5 rounded-lg bg-gold-400/10 border border-gold-400/20 hover:bg-gold-400/20 text-gold-300 transition-colors flex items-center gap-1.5">
+                    <Download className="w-3 h-3" /> .md
+                  </button>
+                  <button onClick={() => download("html")} className="text-xs px-3 py-1.5 rounded-lg bg-gold-400/10 border border-gold-400/20 hover:bg-gold-400/20 text-gold-300 transition-colors flex items-center gap-1.5">
+                    <Download className="w-3 h-3" /> .html
+                  </button>
+                  <button onClick={() => download("txt")} className="text-xs px-3 py-1.5 rounded-lg bg-gold-400/10 border border-gold-400/20 hover:bg-gold-400/20 text-gold-300 transition-colors flex items-center gap-1.5">
+                    <Download className="w-3 h-3" /> .txt
+                  </button>
+                  <button onClick={() => setShowContent((v) => !v)} className="text-xs px-2.5 py-1.5 rounded-lg bg-white/[0.05] border border-white/[0.08] hover:bg-white/[0.09] text-zinc-400 transition-colors">
+                    {showContent ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                  </button>
+                </div>
+              </div>
+              {showContent && (
+                <div className="px-6 py-5 max-h-[600px] overflow-y-auto prose prose-invert prose-sm max-w-none
+                  prose-headings:font-display prose-headings:text-white prose-headings:font-semibold
+                  prose-h1:text-2xl prose-h1:mt-6 prose-h1:mb-3
+                  prose-h2:text-lg prose-h2:mt-5 prose-h2:mb-2 prose-h2:text-zinc-100
+                  prose-h3:text-base prose-h3:mt-4 prose-h3:mb-1.5 prose-h3:text-zinc-200
+                  prose-p:text-zinc-300 prose-p:leading-relaxed prose-p:my-2
+                  prose-strong:text-zinc-100 prose-strong:font-semibold
+                  prose-ul:text-zinc-300 prose-ol:text-zinc-300
+                  prose-li:my-0.5 prose-li:leading-relaxed
+                  prose-blockquote:border-gold-400/40 prose-blockquote:text-zinc-400
+                  prose-a:text-gold-400 prose-a:no-underline hover:prose-a:underline
+                  prose-hr:border-white/[0.08]">
+                  <ReactMarkdown>{result.content.replace(/^META_TITLE:.*$/m, "").replace(/^META_DESC:.*$/m, "").trim()}</ReactMarkdown>
+                </div>
+              )}
+            </div>
+
+            {/* Image Suggestions — right after blog */}
+            {(imageLoading || imageSuggestions.length > 0) && (
+              <div className="card-glass overflow-hidden !border-violet-400/20">
+                <div className="px-5 py-4 border-b border-white/[0.06] flex items-center justify-between">
+                  <span className="text-[11px] font-bold uppercase tracking-[0.18em] text-violet-300">Image Suggestions</span>
+                  <span className="text-[10px] text-zinc-600">search on Unsplash · Pexels · Shutterstock</span>
+                </div>
+                {imageLoading ? (
+                  <div className="px-5 py-6 flex items-center gap-2 text-xs text-zinc-500">
+                    <Loader2 className="w-3.5 h-3.5 animate-spin text-violet-400" />
+                    AI is selecting the best image queries…
+                  </div>
+                ) : (
+                  <div className="px-5 py-4 space-y-3">
+                    {imageSuggestions.map((img, i) => (
+                      <div key={i} className="flex items-start gap-3 p-3 rounded-xl bg-white/[0.02] border border-white/[0.06]">
+                        <div className="flex-shrink-0 mt-0.5">
+                          <span className={clsx(
+                            "text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full",
+                            i === 0 ? "bg-violet-400/10 text-violet-300" :
+                            i === 1 ? "bg-indigo-400/10 text-indigo-300" :
+                            "bg-pink-400/10 text-pink-300"
+                          )}>{img.use}</span>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold text-zinc-100 font-mono">"{img.query}"</p>
+                          <p className="text-[11px] text-zinc-500 mt-0.5">{img.tip}</p>
+                        </div>
+                        <button
+                          onClick={() => { navigator.clipboard.writeText(img.query); setCopiedKey(`img-${i}`); setTimeout(() => setCopiedKey(null), 2000); }}
+                          className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-lg bg-white/[0.05] border border-white/[0.09] hover:bg-white/[0.1] text-zinc-400 hover:text-zinc-200 transition-all flex-shrink-0"
+                        >
+                          {copiedKey === `img-${i}` ? "✓ Copied" : "Copy"}
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Keyword Insights — right after blog */}
+            {result.keyword_data && result.keyword_data.length > 0 && (
+              <div className="card-glass p-5">
+                <div className="flex items-center gap-2 mb-4">
+                  <TrendingUp className="w-4 h-4 text-gold-400" />
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">Keyword Insights (India · Google)</p>
+                  <span className="ml-auto text-[10px] text-zinc-600 font-mono">via DataForSEO</span>
+                </div>
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="text-zinc-600 border-b border-white/[0.06]">
+                      <th className="text-left font-medium pb-2.5 uppercase tracking-wider text-[10px]">Keyword</th>
+                      <th className="text-right font-medium pb-2.5 uppercase tracking-wider text-[10px]">Searches/mo</th>
+                      <th className="text-right font-medium pb-2.5 uppercase tracking-wider text-[10px]">Competition</th>
+                      <th className="text-right font-medium pb-2.5 uppercase tracking-wider text-[10px]">CPC (INR)</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-white/[0.04]">
+                    {result.keyword_data.map((kw, i) => (
+                      <tr key={i} className="hover:bg-white/[0.02] transition-colors">
+                        <td className="py-2.5 pr-4 font-medium text-zinc-100">{kw.keyword}</td>
+                        <td className="py-2.5 text-right tabular-nums font-mono">
+                          {kw.search_volume !== null ? <span className="font-semibold text-gold-300">{formatVolume(kw.search_volume)}</span> : <span className="text-zinc-700">—</span>}
+                        </td>
+                        <td className="py-2.5 text-right">
+                          {kw.competition_level ? (
+                            <span className={clsx("px-2.5 py-0.5 rounded-full font-semibold text-[10px]", COMPETITION_STYLES[kw.competition_level])}>{kw.competition_level}</span>
+                          ) : <span className="text-zinc-700">—</span>}
+                        </td>
+                        <td className="py-2.5 text-right tabular-nums text-zinc-500 font-mono">
+                          {kw.cpc !== null ? `₹${Math.round(kw.cpc * 85)}` : "—"}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                <p className="text-[10px] text-zinc-600 mt-4">Monthly search volume · India · English · Google Ads data</p>
+              </div>
+            )}
+
             {/* ROI / Savings Card */}
             {(() => {
               const freelancerMid = 3500;
@@ -968,126 +1089,6 @@ function GeneratePageInner() {
               )}
             </div>
 
-            {/* Keyword Insights */}
-            {result.keyword_data && result.keyword_data.length > 0 && (
-              <div className="card-glass p-5">
-                <div className="flex items-center gap-2 mb-4">
-                  <TrendingUp className="w-4 h-4 text-gold-400" />
-                  <p className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">Keyword Insights (India · Google)</p>
-                  <span className="ml-auto text-[10px] text-zinc-600 font-mono">via DataForSEO</span>
-                </div>
-                <table className="w-full text-xs">
-                  <thead>
-                    <tr className="text-zinc-600 border-b border-white/[0.06]">
-                      <th className="text-left font-medium pb-2.5 uppercase tracking-wider text-[10px]">Keyword</th>
-                      <th className="text-right font-medium pb-2.5 uppercase tracking-wider text-[10px]">Searches/mo</th>
-                      <th className="text-right font-medium pb-2.5 uppercase tracking-wider text-[10px]">Competition</th>
-                      <th className="text-right font-medium pb-2.5 uppercase tracking-wider text-[10px]">CPC</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-white/[0.04]">
-                    {result.keyword_data.map((kw, i) => (
-                      <tr key={i} className="hover:bg-white/[0.02] transition-colors">
-                        <td className="py-2.5 pr-4 font-medium text-zinc-100">{kw.keyword}</td>
-                        <td className="py-2.5 text-right tabular-nums font-mono">
-                          {kw.search_volume !== null ? <span className="font-semibold text-gold-300">{formatVolume(kw.search_volume)}</span> : <span className="text-zinc-700">—</span>}
-                        </td>
-                        <td className="py-2.5 text-right">
-                          {kw.competition_level ? (
-                            <span className={clsx("px-2.5 py-0.5 rounded-full font-semibold text-[10px]", COMPETITION_STYLES[kw.competition_level])}>{kw.competition_level}</span>
-                          ) : <span className="text-zinc-700">—</span>}
-                        </td>
-                        <td className="py-2.5 text-right tabular-nums text-zinc-500 font-mono">
-                          {kw.cpc !== null ? `$${kw.cpc.toFixed(2)}` : "—"}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-                <p className="text-[10px] text-zinc-600 mt-4">Monthly search volume · India · English · Google Ads data</p>
-              </div>
-            )}
-
-            {/* Image Suggestions */}
-            {(imageLoading || imageSuggestions.length > 0) && (
-              <div className="card-glass overflow-hidden !border-violet-400/20">
-                <div className="px-5 py-4 border-b border-white/[0.06] flex items-center justify-between">
-                  <span className="text-[11px] font-bold uppercase tracking-[0.18em] text-violet-300">Image Suggestions</span>
-                  <span className="text-[10px] text-zinc-600">search on Unsplash · Pexels · Shutterstock</span>
-                </div>
-                {imageLoading ? (
-                  <div className="px-5 py-6 flex items-center gap-2 text-xs text-zinc-500">
-                    <Loader2 className="w-3.5 h-3.5 animate-spin text-violet-400" />
-                    AI is selecting the best image queries…
-                  </div>
-                ) : (
-                  <div className="px-5 py-4 space-y-3">
-                    {imageSuggestions.map((img, i) => (
-                      <div key={i} className="flex items-start gap-3 p-3 rounded-xl bg-white/[0.02] border border-white/[0.06]">
-                        <div className="flex-shrink-0 mt-0.5">
-                          <span className={clsx(
-                            "text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full",
-                            i === 0 ? "bg-violet-400/10 text-violet-300" :
-                            i === 1 ? "bg-indigo-400/10 text-indigo-300" :
-                            "bg-pink-400/10 text-pink-300"
-                          )}>{img.use}</span>
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold text-zinc-100 font-mono">"{img.query}"</p>
-                          <p className="text-[11px] text-zinc-500 mt-0.5">{img.tip}</p>
-                        </div>
-                        <button
-                          onClick={() => { navigator.clipboard.writeText(img.query); setCopiedKey(`img-${i}`); setTimeout(() => setCopiedKey(null), 2000); }}
-                          className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-lg bg-white/[0.05] border border-white/[0.09] hover:bg-white/[0.1] text-zinc-400 hover:text-zinc-200 transition-all flex-shrink-0"
-                        >
-                          {copiedKey === `img-${i}` ? "✓ Copied" : "Copy"}
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Generated Content */}
-            <div className="card-glass overflow-hidden">
-              <div className="flex items-center justify-between px-5 py-4 border-b border-white/[0.06]">
-                <p className="text-sm font-display font-semibold text-white">Generated Content</p>
-                <div className="flex gap-2">
-                  <button onClick={copy} className="text-xs px-3.5 py-1.5 rounded-lg bg-white/[0.05] border border-white/[0.08] hover:bg-white/[0.09] text-zinc-300 transition-colors">
-                    {copied ? "Copied!" : "Copy"}
-                  </button>
-                  <button onClick={() => download("md")} className="text-xs px-3 py-1.5 rounded-lg bg-gold-400/10 border border-gold-400/20 hover:bg-gold-400/20 text-gold-300 transition-colors flex items-center gap-1.5">
-                    <Download className="w-3 h-3" /> .md
-                  </button>
-                  <button onClick={() => download("html")} className="text-xs px-3 py-1.5 rounded-lg bg-gold-400/10 border border-gold-400/20 hover:bg-gold-400/20 text-gold-300 transition-colors flex items-center gap-1.5">
-                    <Download className="w-3 h-3" /> .html
-                  </button>
-                  <button onClick={() => download("txt")} className="text-xs px-3 py-1.5 rounded-lg bg-gold-400/10 border border-gold-400/20 hover:bg-gold-400/20 text-gold-300 transition-colors flex items-center gap-1.5">
-                    <Download className="w-3 h-3" /> .txt
-                  </button>
-                  <button onClick={() => setShowContent((v) => !v)} className="text-xs px-2.5 py-1.5 rounded-lg bg-white/[0.05] border border-white/[0.08] hover:bg-white/[0.09] text-zinc-400 transition-colors">
-                    {showContent ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-                  </button>
-                </div>
-              </div>
-              {showContent && (
-                <div className="px-6 py-5 max-h-[600px] overflow-y-auto prose prose-invert prose-sm max-w-none
-                  prose-headings:font-display prose-headings:text-white prose-headings:font-semibold
-                  prose-h1:text-2xl prose-h1:mt-6 prose-h1:mb-3
-                  prose-h2:text-lg prose-h2:mt-5 prose-h2:mb-2 prose-h2:text-zinc-100
-                  prose-h3:text-base prose-h3:mt-4 prose-h3:mb-1.5 prose-h3:text-zinc-200
-                  prose-p:text-zinc-300 prose-p:leading-relaxed prose-p:my-2
-                  prose-strong:text-zinc-100 prose-strong:font-semibold
-                  prose-ul:text-zinc-300 prose-ol:text-zinc-300
-                  prose-li:my-0.5 prose-li:leading-relaxed
-                  prose-blockquote:border-gold-400/40 prose-blockquote:text-zinc-400
-                  prose-a:text-gold-400 prose-a:no-underline hover:prose-a:underline
-                  prose-hr:border-white/[0.08]">
-                  <ReactMarkdown>{result.content.replace(/^META_TITLE:.*$/m, "").replace(/^META_DESC:.*$/m, "").trim()}</ReactMarkdown>
-                </div>
-              )}
-            </div>
           </div>
         )}
       </div>

@@ -3,9 +3,30 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { Blog } from "@/lib/db";
-import { CheckCircle, AlertTriangle, Download, ChevronDown, ChevronUp, RefreshCw } from "lucide-react";
+import { CheckCircle, AlertTriangle, Download, ChevronDown, ChevronUp, RefreshCw, TrendingUp, Loader2 } from "lucide-react";
 import clsx from "clsx";
 import ReactMarkdown from "react-markdown";
+
+interface ImageSuggestion { query: string; use: string; tip: string; }
+interface KeywordMetric {
+  keyword: string;
+  search_volume: number | null;
+  competition_level: "LOW" | "MEDIUM" | "HIGH" | null;
+  cpc: number | null;
+}
+
+const COMPETITION_STYLES: Record<string, string> = {
+  LOW: "bg-emerald-400/10 text-emerald-300 border border-emerald-400/25",
+  MEDIUM: "bg-amber-400/10 text-amber-300 border border-amber-400/25",
+  HIGH: "bg-rose-400/10 text-rose-300 border border-rose-400/25",
+};
+
+function formatVolume(v: number | null) {
+  if (v === null) return "—";
+  if (v >= 1_000_000) return `${(v / 1_000_000).toFixed(1)}M`;
+  if (v >= 1_000) return `${(v / 1_000).toFixed(1)}K`;
+  return String(v);
+}
 
 const BRAND_COLORS: Record<string, string> = {
   nimulid: "bg-sky-400/10 text-sky-300 border border-sky-400/20",
@@ -26,6 +47,8 @@ export default function BlogsPage() {
   const [selected, setSelected] = useState<Blog | null>(null);
   const [showViolations, setShowViolations] = useState(false);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
+  const [blogImageSuggestions, setBlogImageSuggestions] = useState<ImageSuggestion[]>([]);
+  const [blogImageLoading, setBlogImageLoading] = useState(false);
 
   const regenerate = (blog: Blog) => {
     const params = new URLSearchParams({
@@ -49,6 +72,26 @@ export default function BlogsPage() {
       .then((r) => r.json())
       .then(setBlogs);
   }, []);
+
+  useEffect(() => {
+    if (!selected) { setBlogImageSuggestions([]); return; }
+    setBlogImageSuggestions([]);
+    setBlogImageLoading(true);
+    fetch("/api/suggest-images", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        topic: selected.topic,
+        keywords: selected.keywords.split(",").map((k: string) => k.trim()),
+        brand: selected.brand,
+        excerpt: selected.content.substring(0, 300),
+      }),
+    })
+      .then((r) => r.json())
+      .then((data) => { if (data.images) setBlogImageSuggestions(data.images); })
+      .catch(() => {})
+      .finally(() => setBlogImageLoading(false));
+  }, [selected?.id]);
 
   const updateStatus = async (id: number, status: string) => {
     await fetch("/api/blogs", {
@@ -249,6 +292,89 @@ export default function BlogsPage() {
                 prose-li:my-0.5 prose-hr:border-white/[0.08]">
                 <ReactMarkdown>{selected.content.replace(/^META_TITLE:.*$/m, "").replace(/^META_DESC:.*$/m, "").trim()}</ReactMarkdown>
               </div>
+
+              {/* Keyword Insights */}
+              {(() => {
+                let kwData: KeywordMetric[] = [];
+                try { kwData = JSON.parse(selected.keyword_data_json ?? "[]"); } catch {}
+                return kwData.length > 0 ? (
+                  <div className="mx-6 mb-4 rounded-xl border border-gold-400/15 bg-white/[0.01] overflow-hidden">
+                    <div className="px-4 py-3 border-b border-white/[0.05] flex items-center gap-2">
+                      <TrendingUp className="w-3.5 h-3.5 text-gold-400" />
+                      <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-zinc-400">Keyword Insights (India · Google)</span>
+                      <span className="ml-auto text-[10px] text-zinc-600 font-mono">via DataForSEO</span>
+                    </div>
+                    <div className="px-4 py-3">
+                      <table className="w-full text-xs">
+                        <thead>
+                          <tr className="text-zinc-600 border-b border-white/[0.06]">
+                            <th className="text-left font-medium pb-2 uppercase tracking-wider text-[10px]">Keyword</th>
+                            <th className="text-right font-medium pb-2 uppercase tracking-wider text-[10px]">Searches/mo</th>
+                            <th className="text-right font-medium pb-2 uppercase tracking-wider text-[10px]">Competition</th>
+                            <th className="text-right font-medium pb-2 uppercase tracking-wider text-[10px]">CPC (INR)</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-white/[0.04]">
+                          {kwData.map((kw, i) => (
+                            <tr key={i} className="hover:bg-white/[0.02]">
+                              <td className="py-2 pr-3 font-medium text-zinc-100 text-[11px]">{kw.keyword}</td>
+                              <td className="py-2 text-right tabular-nums font-mono text-[11px]">
+                                {kw.search_volume !== null ? <span className="font-semibold text-gold-300">{formatVolume(kw.search_volume)}</span> : <span className="text-zinc-700">—</span>}
+                              </td>
+                              <td className="py-2 text-right">
+                                {kw.competition_level ? (
+                                  <span className={clsx("px-2 py-0.5 rounded-full font-semibold text-[9px]", COMPETITION_STYLES[kw.competition_level])}>{kw.competition_level}</span>
+                                ) : <span className="text-zinc-700 text-[11px]">—</span>}
+                              </td>
+                              <td className="py-2 text-right tabular-nums text-zinc-500 font-mono text-[11px]">
+                                {kw.cpc !== null ? `₹${Math.round(kw.cpc * 85)}` : "—"}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                ) : null;
+              })()}
+
+              {/* Image Suggestions */}
+              {(blogImageLoading || blogImageSuggestions.length > 0) && (
+                <div className="mx-6 mb-4 rounded-xl border border-violet-400/20 overflow-hidden">
+                  <div className="px-4 py-3 border-b border-white/[0.05] flex items-center justify-between">
+                    <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-violet-300">Image Suggestions</span>
+                    <span className="text-[10px] text-zinc-600">Unsplash · Pexels · Shutterstock</span>
+                  </div>
+                  {blogImageLoading ? (
+                    <div className="px-4 py-4 flex items-center gap-2 text-xs text-zinc-500">
+                      <Loader2 className="w-3 h-3 animate-spin text-violet-400" /> Fetching image ideas…
+                    </div>
+                  ) : (
+                    <div className="px-4 py-3 space-y-2.5">
+                      {blogImageSuggestions.map((img, i) => (
+                        <div key={i} className="flex items-start gap-2.5 p-2.5 rounded-xl bg-white/[0.02] border border-white/[0.06]">
+                          <span className={clsx(
+                            "text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full flex-shrink-0 mt-0.5",
+                            i === 0 ? "bg-violet-400/10 text-violet-300" :
+                            i === 1 ? "bg-indigo-400/10 text-indigo-300" :
+                            "bg-pink-400/10 text-pink-300"
+                          )}>{img.use}</span>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[11px] font-semibold text-zinc-100 font-mono">"{img.query}"</p>
+                            <p className="text-[10px] text-zinc-500 mt-0.5">{img.tip}</p>
+                          </div>
+                          <button
+                            onClick={() => { navigator.clipboard.writeText(img.query); setCopiedKey(`bimg-${i}`); setTimeout(() => setCopiedKey(null), 2000); }}
+                            className="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-white/[0.05] border border-white/[0.08] text-zinc-500 hover:text-zinc-200 transition-all flex-shrink-0"
+                          >
+                            {copiedKey === `bimg-${i}` ? "✓" : "Copy"}
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Publishing Kit — after the blog, used when ready to post */}
               {(selected.meta_title || selected.url_slug) && (
