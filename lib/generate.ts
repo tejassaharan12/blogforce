@@ -394,7 +394,13 @@ ${pass1Content}`;
     messages: [{ role: "user", content: pass2User }],
   });
 
-  const finalContent = (pass2Response.content[0] as { type: string; text: string }).text;
+  const rawContent = (pass2Response.content[0] as { type: string; text: string }).text;
+  // Strip meta lines from visible content — they're stored in seo.meta_title/meta_description
+  const finalContent = rawContent
+    .replace(/^META_TITLE:.*$/m, "")
+    .replace(/^META_DESC:.*$/m, "")
+    .replace(/^\n+/, "")
+    .trim();
   const p2InputTokens = pass2Response.usage.input_tokens;
   const p2OutputTokens = pass2Response.usage.output_tokens;
   const pass2Cost = calcCost(p2InputTokens, p2OutputTokens);

@@ -258,7 +258,7 @@ function GeneratePageInner() {
 
   const download = (format: "md" | "html" | "txt") => {
     if (!result) return;
-    let content = result.content;
+    let content = result.content.replace(/^META_TITLE:.*$/m, "").replace(/^META_DESC:.*$/m, "").trim();
     let mime = "text/plain";
     let ext = "txt";
     if (format === "html") {
@@ -444,7 +444,7 @@ function GeneratePageInner() {
               </div>
               <select
                 value={form.brand}
-                onChange={(e) => { setForm({ ...form, brand: e.target.value }); setSuggestions([]); }}
+                onChange={(e) => { setForm({ ...form, brand: e.target.value }); setSuggestions([]); setSuggestError(""); }}
                 className={inputClass}
               >
                 {BRANDS.map((b) => (
@@ -1076,7 +1076,7 @@ function GeneratePageInner() {
                   prose-blockquote:border-gold-400/40 prose-blockquote:text-zinc-400
                   prose-a:text-gold-400 prose-a:no-underline hover:prose-a:underline
                   prose-hr:border-white/[0.08]">
-                  <ReactMarkdown>{result.content}</ReactMarkdown>
+                  <ReactMarkdown>{result.content.replace(/^META_TITLE:.*$/m, "").replace(/^META_DESC:.*$/m, "").trim()}</ReactMarkdown>
                 </div>
               )}
             </div>

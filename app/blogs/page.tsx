@@ -63,7 +63,8 @@ export default function BlogsPage() {
   };
 
   const download = (blog: Blog, format: "md" | "txt") => {
-    const blob = new Blob([blog.content], { type: "text/plain" });
+    const cleanedContent = blog.content.replace(/^META_TITLE:.*$/m, "").replace(/^META_DESC:.*$/m, "").trim();
+    const blob = new Blob([cleanedContent], { type: "text/plain" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
@@ -246,7 +247,7 @@ export default function BlogsPage() {
                 prose-p:text-zinc-300 prose-p:leading-relaxed prose-p:my-2
                 prose-strong:text-zinc-100 prose-ul:text-zinc-300 prose-ol:text-zinc-300
                 prose-li:my-0.5 prose-hr:border-white/[0.08]">
-                <ReactMarkdown>{selected.content}</ReactMarkdown>
+                <ReactMarkdown>{selected.content.replace(/^META_TITLE:.*$/m, "").replace(/^META_DESC:.*$/m, "").trim()}</ReactMarkdown>
               </div>
 
               {/* Publishing Kit — after the blog, used when ready to post */}
