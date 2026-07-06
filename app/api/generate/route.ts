@@ -52,6 +52,7 @@ export async function POST(req: NextRequest) {
       compliance_violations: JSON.stringify(result.compliance.violations),
       plagiarism_score: result.plagiarism.score,
       plagiarism_passed: result.plagiarism.passed ? 1 : 0,
+      plagiarism_source: result.plagiarism.source,
       seo_keywords_found: result.seo.keywords_found.length,
       word_count: result.seo.word_count,
       tokens_used: result.tokens.total,

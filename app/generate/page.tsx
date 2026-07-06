@@ -814,6 +814,14 @@ function GeneratePageInner() {
                 <p className="text-xs text-zinc-500 mt-1">
                   {result.plagiarism.source === "ngram" ? "Add Copyscape credits to enable" : `Threshold: ${result.plagiarism.threshold}%`}
                 </p>
+                <span className={clsx(
+                  "inline-block mt-2 text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full",
+                  result.plagiarism.source === "ngram"
+                    ? "bg-amber-400/10 text-amber-500"
+                    : "bg-emerald-400/10 text-emerald-500"
+                )}>
+                  {result.plagiarism.source === "ngram" ? "via N-gram (estimate)" : "via Copyscape (live web)"}
+                </span>
               </div>
 
               <div className="card-glass p-5 !border-gold-400/25">

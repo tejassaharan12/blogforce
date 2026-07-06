@@ -146,9 +146,9 @@ export default function BlogsPage() {
                 </span>
                 <span className="text-xs text-zinc-500">
                   Plagiarism:{" "}
-                  {blog.plagiarism_score === 0
+                  {blog.plagiarism_source === "ngram"
                     ? <span className="text-amber-400">Not Verified</span>
-                    : <span className={blog.plagiarism_passed ? "text-emerald-400" : "text-rose-400"}>{blog.plagiarism_score.toFixed(1)}%</span>
+                    : <span className={blog.plagiarism_passed ? "text-emerald-400" : "text-rose-400"}>{blog.plagiarism_score.toFixed(1)}% ✓</span>
                   }
                 </span>
               </div>

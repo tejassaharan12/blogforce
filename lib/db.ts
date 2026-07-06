@@ -30,6 +30,7 @@ async function initSchema() {
       compliance_violations TEXT DEFAULT '[]',
       plagiarism_score REAL DEFAULT 0,
       plagiarism_passed INTEGER DEFAULT 1,
+      plagiarism_source TEXT DEFAULT 'ngram',
       seo_keywords_found INTEGER DEFAULT 0,
       word_count INTEGER DEFAULT 0,
       tokens_used INTEGER DEFAULT 0,
@@ -58,6 +59,7 @@ async function initSchema() {
     "ALTER TABLE blogs ADD COLUMN meta_description TEXT DEFAULT ''",
     "ALTER TABLE blogs ADD COLUMN url_slug TEXT DEFAULT ''",
     "ALTER TABLE blogs ADD COLUMN schema_json TEXT DEFAULT '{}'",
+    "ALTER TABLE blogs ADD COLUMN plagiarism_source TEXT DEFAULT 'ngram'",
   ]) {
     try { await client.execute(col); } catch {}
   }
@@ -77,6 +79,7 @@ export interface Blog {
   compliance_violations: string;
   plagiarism_score: number;
   plagiarism_passed: number;
+  plagiarism_source: string;
   seo_keywords_found: number;
   word_count: number;
   tokens_used: number;
@@ -97,15 +100,15 @@ export const blogsDb = {
       sql: `INSERT INTO blogs (
         brand, topic, keywords, target_audience, content_type, content,
         status, compliance_passed, compliance_risk_score, compliance_violations,
-        plagiarism_score, plagiarism_passed, seo_keywords_found,
+        plagiarism_score, plagiarism_passed, plagiarism_source, seo_keywords_found,
         word_count, tokens_used, cost_inr,
         meta_title, meta_description, url_slug, schema_json
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       args: [
         data.brand, data.topic, data.keywords, data.target_audience,
         data.content_type, data.content, data.status,
         data.compliance_passed, data.compliance_risk_score, data.compliance_violations,
-        data.plagiarism_score, data.plagiarism_passed, data.seo_keywords_found,
+        data.plagiarism_score, data.plagiarism_passed, data.plagiarism_source ?? "ngram", data.seo_keywords_found,
         data.word_count, data.tokens_used, data.cost_inr,
         data.meta_title, data.meta_description, data.url_slug, data.schema_json,
       ],
