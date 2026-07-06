@@ -1,0 +1,22 @@
+# dependencies
+node_modules/
+
+# Next.js build output
+.next/
+out/
+
+# environment variables — NEVER commit these
+.env
+.env.local
+.env.production
+.env*.local
+
+# local database — data lives in Turso in production
+blogforce.db
+blogforce.db-shm
+blogforce.db-wal
+
+# misc
+.DS_Store
+*.log
+npm-debug.log*
