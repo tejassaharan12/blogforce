@@ -356,9 +356,9 @@ Prioritise accuracy, natural keyword placement, proper structure, and full compl
 
   // Check if pass 2 + APIs would exceed budget
   // DataForSEO: ~$0.045/keyword × up to 10 = ~$0.45 = ~₹38 worst case
-  // Copyscape: $0.03 = ₹2.55
+  // Copyscape: $0.03 base (200 words) + $0.01/100 words after = $0.11 for 1000-word cap = ₹9.35
   const estimatedPass2Cost = calcCost(2500, 1800);
-  const estimatedApiCost = (req.keywords.length * 0.045 * 85) + 2.55;
+  const estimatedApiCost = (req.keywords.length * 0.045 * 85) + 9.35;
   const estimatedTotal = pass1Cost + estimatedPass2Cost + estimatedApiCost;
   if (currentMonthlySpend + estimatedTotal > MONTHLY_BUDGET_CAP_INR) {
     throw new Error(

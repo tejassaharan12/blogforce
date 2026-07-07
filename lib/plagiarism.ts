@@ -59,6 +59,7 @@ async function checkWithCopyscape(
   }
 
   const queryWords = parseInt(data.querywords ?? "0", 10);
+  const actualCostUsd = parseFloat(data.cost ?? "0");
   const matches: Array<{ minwordsmatched?: string }> =
     data.allresults?.result ?? [];
   const matchedWords = matches.reduce(
@@ -78,7 +79,7 @@ async function checkWithCopyscape(
     unique_phrases: queryWords - matchedWords,
     total_phrases: queryWords,
     source: "copyscape",
-    cost_usd: 0.03, // Copyscape Premium charges $0.03 per search ($5 = ~166 checks)
+    cost_usd: actualCostUsd, // read from API response: $0.03 base + $0.01 per 100 words over 200
     note:
       matches.length > 0
         ? `Found ${matches.length} matching source(s) on the web.`
