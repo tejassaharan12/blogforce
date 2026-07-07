@@ -354,11 +354,15 @@ Prioritise accuracy, natural keyword placement, proper structure, and full compl
   const p1OutputTokens = pass1Response.usage.output_tokens;
   const pass1Cost = calcCost(p1InputTokens, p1OutputTokens);
 
-  // Check if pass 2 would exceed budget
-  const estimatedPass2Cost = calcCost(2500, 1800); // conservative estimate
-  if (currentMonthlySpend + pass1Cost + estimatedPass2Cost > MONTHLY_BUDGET_CAP_INR) {
+  // Check if pass 2 + APIs would exceed budget
+  // DataForSEO: ~$0.045/keyword × up to 10 = ~$0.45 = ~₹38 worst case
+  // Copyscape: $0.03 = ₹2.55
+  const estimatedPass2Cost = calcCost(2500, 1800);
+  const estimatedApiCost = (req.keywords.length * 0.045 * 85) + 2.55;
+  const estimatedTotal = pass1Cost + estimatedPass2Cost + estimatedApiCost;
+  if (currentMonthlySpend + estimatedTotal > MONTHLY_BUDGET_CAP_INR) {
     throw new Error(
-      `Generating this blog would exceed your monthly budget cap of ₹${MONTHLY_BUDGET_CAP_INR}. Current spend: ₹${currentMonthlySpend.toFixed(2)}. This generation would cost approx ₹${(pass1Cost + estimatedPass2Cost).toFixed(2)}.`
+      `Generating this blog would exceed your monthly budget cap of ₹${MONTHLY_BUDGET_CAP_INR}. Current spend: ₹${currentMonthlySpend.toFixed(2)}. This generation would cost approx ₹${estimatedTotal.toFixed(2)} (AI + DataForSEO + Copyscape).`
     );
   }
 
