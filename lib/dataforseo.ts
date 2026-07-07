@@ -7,6 +7,11 @@ export interface KeywordMetric {
   cpc: number | null;
 }
 
+export interface KeywordMetricsResult {
+  metrics: KeywordMetric[];
+  cost_usd: number;
+}
+
 function getAuthHeader(): string {
   const login = process.env.DATAFORSEO_LOGIN;
   const password = process.env.DATAFORSEO_PASSWORD;
@@ -14,9 +19,11 @@ function getAuthHeader(): string {
   return "Basic " + Buffer.from(`${login}:${password}`).toString("base64");
 }
 
-export async function getKeywordMetrics(keywords: string[]): Promise<KeywordMetric[]> {
-  if (!process.env.DATAFORSEO_LOGIN || !process.env.DATAFORSEO_PASSWORD) return [];
-  if (keywords.length === 0) return [];
+export async function getKeywordMetrics(keywords: string[]): Promise<KeywordMetricsResult> {
+  if (!process.env.DATAFORSEO_LOGIN || !process.env.DATAFORSEO_PASSWORD) {
+    return { metrics: [], cost_usd: 0 };
+  }
+  if (keywords.length === 0) return { metrics: [], cost_usd: 0 };
 
   try {
     const res = await fetch(`${DFS_API_BASE}/keywords_data/google_ads/search_volume/live`, {
@@ -36,15 +43,20 @@ export async function getKeywordMetrics(keywords: string[]): Promise<KeywordMetr
     });
 
     const data = await res.json();
-    const results: Record<string, unknown>[] = data?.tasks?.[0]?.result ?? [];
+    const task = data?.tasks?.[0];
+    const results: Record<string, unknown>[] = task?.result ?? [];
+    const cost_usd: number = typeof task?.cost === "number" ? task.cost : 0;
 
-    return results.map((r) => ({
-      keyword: r.keyword as string,
-      search_volume: r.search_volume != null ? (r.search_volume as number) : null,
-      competition_level: (r.competition_level as "LOW" | "MEDIUM" | "HIGH") ?? null,
-      cpc: r.cpc != null ? parseFloat((r.cpc as number).toFixed(2)) : null,
-    }));
+    return {
+      metrics: results.map((r) => ({
+        keyword: r.keyword as string,
+        search_volume: r.search_volume != null ? (r.search_volume as number) : null,
+        competition_level: (r.competition_level as "LOW" | "MEDIUM" | "HIGH") ?? null,
+        cpc: r.cpc != null ? parseFloat((r.cpc as number).toFixed(2)) : null,
+      })),
+      cost_usd,
+    };
   } catch {
-    return [];
+    return { metrics: [], cost_usd: 0 };
   }
 }

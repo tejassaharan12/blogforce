@@ -72,6 +72,8 @@ export interface GenerateResult {
   cost_breakdown: {
     pass1_cost: number;
     pass2_cost: number;
+    dataforseo_cost: number;
+    copyscape_cost: number;
     total_cost: number;
   };
   keyword_data: KeywordMetric[];
@@ -405,7 +407,6 @@ ${pass1Content}`;
   const p2OutputTokens = pass2Response.usage.output_tokens;
   const pass2Cost = calcCost(p2InputTokens, p2OutputTokens);
 
-  const totalCost = pass1Cost + pass2Cost;
   const totalTokens = p1InputTokens + p1OutputTokens + p2InputTokens + p2OutputTokens;
 
   // ── COMPLIANCE CHECK ────────────────────────────────────────────────────────
@@ -415,7 +416,10 @@ ${pass1Content}`;
   const plagiarism = await checkPlagiarism(finalContent);
 
   // ── DATAFORSEO KEYWORD METRICS ───────────────────────────────────────────────
-  const keywordData = await getKeywordMetrics(req.keywords);
+  const { metrics: keywordData, cost_usd: dfsUsd } = await getKeywordMetrics(req.keywords);
+  const dataforseoCostInr = dfsUsd * 85;
+  const copyscapeCostInr = plagiarism.cost_usd * 85;
+  const totalCost = pass1Cost + pass2Cost + dataforseoCostInr + copyscapeCostInr;
 
   // ── SEO ANALYSIS ────────────────────────────────────────────────────────────
   const words = finalContent.split(/\s+/).filter(Boolean);
@@ -510,6 +514,8 @@ ${pass1Content}`;
     cost_breakdown: {
       pass1_cost: parseFloat(pass1Cost.toFixed(4)),
       pass2_cost: parseFloat(pass2Cost.toFixed(4)),
+      dataforseo_cost: parseFloat(dataforseoCostInr.toFixed(4)),
+      copyscape_cost: parseFloat(copyscapeCostInr.toFixed(4)),
       total_cost: parseFloat(totalCost.toFixed(4)),
     },
     keyword_data: keywordData,

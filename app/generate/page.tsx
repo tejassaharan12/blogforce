@@ -121,6 +121,8 @@ interface GenerateResult {
   cost_breakdown: {
     pass1_cost: number;
     pass2_cost: number;
+    dataforseo_cost: number;
+    copyscape_cost: number;
     total_cost: number;
   };
   cost_inr: number;
@@ -826,11 +828,16 @@ function GeneratePageInner() {
 
               <div className="card-glass p-5 !border-gold-400/25">
                 <div className="flex items-center gap-2 mb-2">
-                  <span className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">Cost (Opus)</span>
+                  <span className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">Total Cost</span>
                 </div>
-                <p className="text-2xl font-display font-semibold text-gold-300">₹{result.cost_inr.toFixed(3)}</p>
-                <p className="text-xs text-zinc-500 mt-1.5 font-mono">Pass 1: ₹{result.cost_breakdown.pass1_cost.toFixed(3)}</p>
-                <p className="text-xs text-zinc-500 font-mono">Pass 2: ₹{result.cost_breakdown.pass2_cost.toFixed(3)}</p>
+                <p className="text-2xl font-display font-semibold text-gold-300">₹{result.cost_inr.toFixed(2)}</p>
+                <p className="text-xs text-zinc-500 mt-1.5 font-mono">AI (P1+P2): ₹{(result.cost_breakdown.pass1_cost + result.cost_breakdown.pass2_cost).toFixed(3)}</p>
+                {result.cost_breakdown.dataforseo_cost > 0 && (
+                  <p className="text-xs text-zinc-500 font-mono">DataForSEO: ₹{result.cost_breakdown.dataforseo_cost.toFixed(3)}</p>
+                )}
+                {result.cost_breakdown.copyscape_cost > 0 && (
+                  <p className="text-xs text-zinc-500 font-mono">Copyscape: ₹{result.cost_breakdown.copyscape_cost.toFixed(2)}</p>
+                )}
                 <p className="text-xs text-zinc-600 mt-1 font-mono">{result.tokens.total.toLocaleString()} tokens</p>
               </div>
             </div>

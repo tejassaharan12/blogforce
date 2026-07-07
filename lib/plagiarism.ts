@@ -6,6 +6,7 @@ export interface PlagiarismResult {
   total_phrases: number;
   note: string;
   source: "copyscape" | "ngram";
+  cost_usd: number; // 0 for ngram (free), ~$0.03 for Copyscape
 }
 
 const THRESHOLD = 10;
@@ -53,6 +54,7 @@ async function checkWithCopyscape(
     return {
       ...fallback,
       note: `Copyscape error: ${data.error}. Add credits at copyscape.com. Using estimate for now.`,
+      cost_usd: 0,
     };
   }
 
@@ -76,6 +78,7 @@ async function checkWithCopyscape(
     unique_phrases: queryWords - matchedWords,
     total_phrases: queryWords,
     source: "copyscape",
+    cost_usd: 0.03, // Copyscape Premium charges $0.03 per search ($5 = ~166 checks)
     note:
       matches.length > 0
         ? `Found ${matches.length} matching source(s) on the web.`
@@ -127,6 +130,7 @@ function checkWithNGram(content: string): PlagiarismResult {
       unique_phrases: 0,
       total_phrases: 0,
       source: "ngram",
+      cost_usd: 0,
       note: "Content too short to analyse.",
     };
   }
@@ -150,6 +154,7 @@ function checkWithNGram(content: string): PlagiarismResult {
     unique_phrases: total_phrases - matched,
     total_phrases,
     source: "ngram",
+    cost_usd: 0,
     note: "Add Copyscape credentials in .env.local for real web comparison.",
   };
 }
@@ -166,6 +171,7 @@ export async function checkPlagiarism(content: string): Promise<PlagiarismResult
     } catch {
       return {
         ...checkWithNGram(content),
+        cost_usd: 0,
         note: "Copyscape unreachable. Using n-gram estimate.",
       };
     }
