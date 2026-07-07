@@ -1,0 +1,155 @@
+import { NextResponse } from "next/server";
+import { blogsDb } from "@/lib/db";
+
+export const dynamic = "force-dynamic";
+
+interface Check {
+  ok: boolean;
+  message: string;
+  fix?: string;
+}
+
+export async function GET() {
+  const checks: Record<string, Check> = {};
+
+  // ── 1. DATABASE ─────────────────────────────────────────────────────────────
+  try {
+    const stats = await blogsDb.getStats();
+    checks.database = { ok: true, message: `Connected · ${stats.total_blogs ?? 0} blogs stored` };
+  } catch (e) {
+    checks.database = {
+      ok: false,
+      message: "Cannot reach Turso database",
+      fix: "Check TURSO_DATABASE_URL and TURSO_AUTH_TOKEN in Vercel environment variables",
+    };
+  }
+
+  // ── 2. ANTHROPIC ────────────────────────────────────────────────────────────
+  if (!process.env.ANTHROPIC_API_KEY) {
+    checks.anthropic = {
+      ok: false,
+      message: "ANTHROPIC_API_KEY not set",
+      fix: "Add ANTHROPIC_API_KEY to Vercel environment variables and redeploy",
+    };
+  } else {
+    checks.anthropic = { ok: true, message: "API key configured" };
+  }
+
+  // ── 3. COPYSCAPE ────────────────────────────────────────────────────────────
+  const csUser = process.env.COPYSCAPE_USERNAME;
+  const csKey = process.env.COPYSCAPE_API_KEY;
+  if (!csUser || !csKey) {
+    checks.copyscape = {
+      ok: false,
+      message: "COPYSCAPE_USERNAME or COPYSCAPE_API_KEY not set",
+      fix: "Add both to Vercel environment variables",
+    };
+  } else {
+    try {
+      // GET request for balance check
+      const balUrl = `https://www.copyscape.com/api/?u=${csUser}&k=${csKey}&o=bal&f=JSON`;
+      const balRes = await fetch(balUrl);
+      const balData = await balRes.json();
+      if (balData.error) {
+        checks.copyscape = {
+          ok: false,
+          message: `Auth failed: ${balData.error}`,
+          fix: "Go to copyscape.com/apiconfigure.php, copy the current API key and update COPYSCAPE_API_KEY in Vercel",
+        };
+      } else {
+        const balance = parseFloat(balData.value ?? "0");
+        checks.copyscape = {
+          ok: balance > 0,
+          message: `Balance: $${balance.toFixed(2)}`,
+          fix: balance <= 0 ? "Top up Copyscape credits at copyscape.com/premium.php" : undefined,
+        };
+      }
+    } catch {
+      checks.copyscape = {
+        ok: false,
+        message: "Copyscape API unreachable",
+        fix: "Copyscape may be down. Check copyscape.com",
+      };
+    }
+  }
+
+  // ── 4. DATAFORSEO ───────────────────────────────────────────────────────────
+  const dfsLogin = process.env.DATAFORSEO_LOGIN;
+  const dfsPass = process.env.DATAFORSEO_PASSWORD;
+  if (!dfsLogin || !dfsPass) {
+    checks.dataforseo = {
+      ok: false,
+      message: "DATAFORSEO_LOGIN or DATAFORSEO_PASSWORD not set",
+      fix: "Add both to Vercel environment variables",
+    };
+  } else {
+    try {
+      const auth = "Basic " + Buffer.from(`${dfsLogin}:${dfsPass}`).toString("base64");
+      const res = await fetch("https://api.dataforseo.com/v3/appendix/user_data", {
+        headers: { Authorization: auth },
+      });
+      const data = await res.json();
+      if (res.ok && data.status_code === 20000) {
+        const balance = data.tasks?.[0]?.result?.[0]?.money?.balance ?? null;
+        checks.dataforseo = {
+          ok: true,
+          message: balance !== null ? `Connected · $${parseFloat(balance).toFixed(2)} balance` : "Connected",
+        };
+      } else {
+        checks.dataforseo = {
+          ok: false,
+          message: `Auth failed (${data.status_code ?? res.status})`,
+          fix: "Check DATAFORSEO_LOGIN and DATAFORSEO_PASSWORD in Vercel environment variables",
+        };
+      }
+    } catch {
+      checks.dataforseo = {
+        ok: false,
+        message: "DataForSEO API unreachable",
+        fix: "DataForSEO may be down. Check dataforseo.com",
+      };
+    }
+  }
+
+  // ── 5. BUDGET ───────────────────────────────────────────────────────────────
+  try {
+    const monthly = await blogsDb.getMonthlyUsage();
+    const currentMonth = new Date().toISOString().slice(0, 7);
+    const thisMonth = monthly.find((m) => m.month === currentMonth);
+    const spend = thisMonth?.total_cost ?? 0;
+    const cap = 3000;
+    const pct = Math.round((spend / cap) * 100);
+    if (spend >= cap) {
+      checks.budget = {
+        ok: false,
+        message: `Monthly budget cap reached: ₹${spend.toFixed(0)} / ₹${cap}`,
+        fix: "No more blogs can be generated this month. Wait for next month or increase the cap in lib/generate.ts",
+      };
+    } else if (pct >= 80) {
+      checks.budget = {
+        ok: false,
+        message: `Budget at ${pct}%: ₹${spend.toFixed(0)} / ₹${cap} — only ₹${(cap - spend).toFixed(0)} left`,
+        fix: "You are close to the monthly limit. Use remaining budget carefully.",
+      };
+    } else {
+      checks.budget = { ok: true, message: `₹${spend.toFixed(0)} / ₹${cap} used (${pct}%)` };
+    }
+  } catch {
+    checks.budget = { ok: true, message: "Could not read budget data" };
+  }
+
+  const allOk = Object.values(checks).every((c) => c.ok);
+  const issues = Object.entries(checks).filter(([, c]) => !c.ok);
+
+  return NextResponse.json(
+    {
+      ok: allOk,
+      checked_at: new Date().toISOString(),
+      summary: allOk
+        ? "All systems operational"
+        : `${issues.length} issue${issues.length > 1 ? "s" : ""} detected: ${issues.map(([k]) => k).join(", ")}`,
+      checks,
+    },
+    { status: allOk ? 200 : 503 }
+  );
+}
