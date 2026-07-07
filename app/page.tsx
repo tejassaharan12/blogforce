@@ -1,7 +1,6 @@
 import { blogsDb } from "@/lib/db";
 import Link from "next/link";
 import { PenLine, CheckCircle, AlertTriangle, IndianRupee } from "lucide-react";
-import HealthBanner from "@/components/HealthBanner";
 
 export const dynamic = "force-dynamic";
 
@@ -78,9 +77,6 @@ export default async function Dashboard() {
           + New Blog
         </Link>
       </div>
-
-      {/* System health alerts */}
-      <HealthBanner />
 
       {/* Attention banner */}
       {(() => {
