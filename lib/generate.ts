@@ -33,6 +33,12 @@ export interface GenerateRequest {
   content_type: string;
   brand_voice_hint?: string;
   target_length?: TargetLength;
+  // Pre-researched SEO fields (from imported content plan)
+  primary_keyword?: string;
+  secondary_keywords?: string;
+  lsi_keywords?: string;
+  content_angle?: string;
+  cta_link?: string;
 }
 
 export interface GenerateResult {
@@ -335,9 +341,19 @@ End the article with this disclaimer on its own line after a divider:
 ---
 ${disclaimer}`;
 
+  const planKeywordSection = req.primary_keyword
+    ? `\nKEYWORD TARGETING (pre-researched — follow precisely):
+• PRIMARY KEYWORD: "${req.primary_keyword}" — must appear in the H1, opening paragraph, and meta title
+${req.secondary_keywords ? `• SECONDARY KEYWORDS: ${req.secondary_keywords} — use naturally in subheadings and body` : ""}
+${req.lsi_keywords ? `• LSI / SEMANTIC KEYWORDS: ${req.lsi_keywords} — weave throughout for topical depth` : ""}
+${req.content_angle ? `• CONTENT ANGLE: ${req.content_angle.split("(")[0].trim()} — follow this angle precisely` : ""}
+${req.cta_link ? `• CTA: Include one natural hyperlink to [this product page](${req.cta_link}) near the end` : ""}`
+    : "";
+
   const pass1User = `Write a ${req.content_type} about: "${req.topic}"
 Brand: ${req.brand.replace(/_/g, "-").toUpperCase()}
 Keywords to include: ${keywordsStr}
+${planKeywordSection}
 
 Prioritise accuracy, natural keyword placement, proper structure, and full compliance.`;
 

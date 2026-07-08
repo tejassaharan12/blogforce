@@ -8,7 +8,7 @@ export async function POST(req: NextRequest) {
   let body: Record<string, string> = {};
   try {
     body = await req.json();
-    const { brand, topic, keywords, target_audience, content_type, brand_voice_hint } = body;
+    const { brand, topic, keywords, target_audience, content_type, brand_voice_hint, primary_keyword, secondary_keywords, lsi_keywords, content_angle, cta_link } = body;
 
     if (!brand || !topic || !keywords || !target_audience || !content_type) {
       return NextResponse.json(
@@ -51,6 +51,11 @@ export async function POST(req: NextRequest) {
         target_audience,
         content_type,
         brand_voice_hint,
+        primary_keyword,
+        secondary_keywords,
+        lsi_keywords,
+        content_angle,
+        cta_link,
       },
       currentMonthlySpend
     );

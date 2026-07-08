@@ -2,12 +2,13 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, PenLine, BookOpen, BarChart2, LogOut } from "lucide-react";
+import { LayoutDashboard, PenLine, BookOpen, BarChart2, LogOut, ListChecks } from "lucide-react";
 import clsx from "clsx";
 
 const nav = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/generate", label: "Generate Blog", icon: PenLine },
+  { href: "/plan", label: "Blog Plan", icon: ListChecks },
   { href: "/blogs", label: "All Blogs", icon: BookOpen },
   { href: "/analytics", label: "Analytics", icon: BarChart2 },
 ];
