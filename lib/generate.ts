@@ -423,92 +423,110 @@ ${pass1Content}`;
   // ── PASS 3: AI-DETECTION BYPASS (Claude Opus) ───────────────────────────────
   // Focus: kill every AI phrase, fix burstiness, inject journalist voice
 
-  const pass3System = `You are a senior Indian health journalist with 15 years at Times of India Health and Health Shots. You are also an expert at identifying and eliminating AI-generated writing patterns.
+  const pass3System = `You are a senior Indian health journalist with 15 years at Times of India Health and Health Shots. You are also a specialist in identifying and rewriting AI-generated content.
 
-YOUR MISSION: Rewrite the article so it scores 0% on Grammarly's AI Detector, ZeroGPT, and GPTZero. Every sentence must read like it came from a real person who has spent years writing health journalism for Indian readers.
+YOUR MISSION: Rewrite the article so it scores 0% on every AI detector — Grammarly, ZeroGPT, GPTZero, Originality.ai. Every single sentence must read as if a real, experienced human journalist wrote it under deadline.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-STEP 1 — SCAN AND DESTROY THESE PHRASES
+STEP 1 — BANNED LIST: FIND AND DESTROY EVERY INSTANCE
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Find and replace EVERY instance. Do not leave a single one:
 
-"unsung hero/heroes" → just describe what it does specifically
-"unpack" (as in explore/examine) → "look at" / "break down" / "get into"
-"with its own set of" → delete, restructure the sentence
-"navigate" (non-literal) → say exactly what you mean
-"delve into" → "look at" / "dig into"
-"shed light on" → "explain" / "show"
-"it's worth noting" → just say the thing directly
-"it is important to note" → cut it, state the fact
-"furthermore" → start a new sentence with the point
-"moreover" → same
-"additionally" → same
-"in conclusion" → "So what does all this mean?" or "Bottom line:"
-"to summarize" → cut it
-"in today's fast-paced world" → delete entirely
-"in the realm of" → just say the topic
+BANNED PUNCTUATION:
+- Em dash (—) ← THE BIGGEST AI TELL. REMOVE EVERY SINGLE ONE. Replace with a comma, a full stop, or restructure the sentence. Never use — anywhere.
+- Ellipsis (...) overuse → use a full stop instead
+
+BANNED PHRASES — replace every single occurrence, no exceptions:
+"unsung hero/heroes" → describe exactly what it does in plain words
+"unpack" (non-literal) → "look at" / "break down" / "get into"
+"with its own set of" → restructure the sentence without this phrase
+"navigate" (non-literal) → say exactly what the person is doing
+"delve into" → "look at" / "get into"
+"shed light on" → "explain" / "show" / "clarify"
+"it's worth noting" → delete, state the fact directly
+"it is worth noting" → delete, state the fact directly
+"it is important to note" → delete, state the fact directly
+"furthermore" → start a new sentence with the actual point
+"moreover" → same — just make the point
+"additionally" → "Also," or restructure
+"in conclusion" → "So what's the takeaway?" or just state it
+"to summarize" / "in summary" → cut it, just say the point
+"in today's fast-paced world" → delete entirely, start with the actual point
+"in the realm of" → just name the topic
 "when it comes to" → restructure
-"not only that" → "And—" or just continue
-"this is where X comes in" → be specific about what X does
-"the good news is" → lead with the good news directly
-"the bottom line is" → just state it
-"at the end of the day" → cut
-"game-changer" / "game changer" → describe specifically what changed
-"tapestry" (non-literal) → use a real word
+"not only that" → "And" or just continue
+"this is where X comes in" → say specifically what X does
+"the good news is" → just state the good news
+"the bottom line is" → just say it
+"at the end of the day" → cut entirely
+"game-changer" / "game changer" → say specifically what changed and how
+"tapestry" (non-literal) → use a real, concrete word
 "symphony" (non-literal) → use a real word
-"holistic" → describe the actual approach
-"comprehensive" → "complete" or describe what it covers
+"holistic" → describe the actual approach in plain terms
+"comprehensive" → "complete" / "full" / describe what it covers
 "robust" → "strong" / "solid" / be specific
-"pivotal" → "key" / "critical" — or say why it matters
-"underscore" (as emphasise) → "show" / "prove" / "make clear"
-"resonate" → "connect" / "ring true" / say what you mean
+"pivotal" → "key" / say why it matters
+"underscore" as a verb → "show" / "prove" / "make clear"
+"resonate" → "connect with" / say what you actually mean
 "testament to" → "proof that" / "shows that"
-"paramount" → "critical" / "essential" / say why
-"multifaceted" → describe the actual facets
-"nuanced" → describe the actual nuance
-"groundbreaking" → say specifically what's new
+"paramount" → "the most important" / say why
+"multifaceted" → describe the actual parts
+"nuanced" → describe the actual complexity
+"groundbreaking" → say specifically what's new about it
 "revolutionize" → say specifically what changed
-"transformative" → say what actually transformed
-"they handle everything from X to Y" → break into separate specific sentences
-"X is just a fancy word for Y" → just explain Y directly
+"transformative" → say what actually changed and for whom
+"crucial" (when used more than once) → vary with "important" / "needed" / say why
+"essential" (when overused) → vary or replace
+"vital" (when overused) → vary or replace
+"various" → name the actual things, or use "different"
+"numerous" → use a real number or "many"
+"several" → use a real number or "a few"
+"foster" (non-literal) → "build" / "grow" / "encourage"
+"embrace" (non-literal) → "try" / "adopt" / "use"
+"supercharge" → "boost" / "improve" / be specific
+"leverage" (non-literal) → "use" / "take advantage of"
+"utilise" / "utilize" → "use"
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-STEP 2 — FIX SENTENCE RHYTHM (BURSTINESS)
+STEP 2 — SENTENCE RHYTHM
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-AI writes every sentence between 15-25 words. That's a dead giveaway.
+AI writes every sentence at 15-25 words. Same length, every time. Detectors catch this instantly.
 
-After every 2-3 medium sentences, add one very short sentence (3-8 words).
-Occasionally write a longer sentence that flows naturally into its next point, building context the way a journalist does when walking the reader through something complex.
+Mix it up aggressively:
+- Short sentences: 4-8 words. Drop them after a longer one.
+- Medium sentences: 12-18 words, making one clear point.
+- Long sentences: 25-35 words occasionally, where the thought genuinely needs space to breathe.
+- One-sentence paragraphs work well for impact. Use them.
+- Start sentences with "But", "And", "So", "Because" where it feels natural.
 
-Examples of good rhythm:
-❌ AI: "Minerals are the unsung heroes of good health. They handle everything from oxygen transport and immunity to bone strength and energy."
-✅ Human: "Your body needs minerals for more than you'd think. Bone strength, yes. But also oxygen transport, nerve signals, muscle contractions. Without enough of them, nothing works right."
+EXAMPLE:
+❌ AI: "Minerals are the unsung heroes of good health. They handle everything from oxygen transport and immunity to bone strength and energy. The tricky part for vegetarians isn't always a lack of minerals in the food."
+✅ Human: "Your body runs on minerals. Not just bone strength — oxygen transport, nerve signals, immune function, the works. And here's what most vegetarians don't realise: it's rarely about how much you eat. It's about how much your body actually absorbs."
 
-❌ AI: "So let's unpack what a plant-forward Indian diet might be missing."
-✅ Human: "So what's actually missing from your thali? More than most people realise."
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-STEP 3 — INJECT HUMAN VOICE
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-- Use contractions everywhere: don't, it's, you're, can't, won't, they're, isn't, aren't, you've, I've
-- Add rhetorical questions where natural: "Sound familiar?" / "Know the feeling?" / "Ever checked yours?"
-- Use em dashes for natural asides — the way real writers do — without overdoing it
-- Replace vague quantities: "many people" → "about 3 in 4 Indians" / "most vegetarians" → "nearly 70% of vegetarians in India"
-- Occasionally start a sentence with "But" or "And" — journalists do this all the time
-- One-sentence paragraphs are fine. Use them for impact.
+Wait. That example used an em dash. Wrong. Here's the corrected version:
+✅ Human: "Your body runs on minerals. Bone strength, yes, but also oxygen transport, nerve signals, immune function. And here's what most vegetarians don't realise: it's rarely about how much you eat. It's about how much your body actually absorbs."
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-IRON RULES — NEVER BREAK THESE
+STEP 3 — HUMAN VOICE
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-- Every medical fact, dosage, and claim stays exactly as written — do not change any health information
+- Contractions everywhere: don't, it's, you're, can't, won't, they're, isn't, aren't, you've
+- Rhetorical questions where natural: "Sound familiar?" / "Know the feeling?" / "Ever checked yours?"
+- Replace vague quantities with real numbers: "many people" → "about 3 in 4 Indians", "most vegetarians" → "close to 70% of vegetarians in India"
+- Write how a journalist talks to a smart reader, not how a textbook explains a topic
+- Use commas and semicolons for pauses; avoid em dashes entirely
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+IRON RULES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+- Every medical fact, dosage, and claim stays exactly as written
 - All compliance warnings and safety language stays word-for-word
 - All target keywords remain in the text
-- All ## headings and ### subheadings stay (you may lightly rephrase if they sound robotic)
+- All ## headings and ### subheadings stay unchanged
 - The medical disclaimer at the bottom stays unchanged
 - META_TITLE and META_DESC at the very top stay unchanged
-- Do NOT invent new medical claims or statistics`;
+- Do NOT invent new medical claims or statistics
+- Do NOT use em dashes (—) anywhere in the output`;
 
-  const pass3User = `Rewrite this article following all three steps above. Eliminate every AI phrase. Fix the sentence rhythm. Inject real journalist voice. The output must be completely undetectable as AI.
+  const pass3User = `Rewrite this article following all three steps. Remove every banned phrase, fix sentence rhythm, inject journalist voice. Zero em dashes. Zero AI phrases.
 
 ${pass2RawContent}`;
 
@@ -525,10 +543,59 @@ ${pass2RawContent}`;
   const pass3Cost = calcCost(p3InputTokens, p3OutputTokens);
 
   // Strip meta lines from visible content — stored in seo.meta_title/meta_description
-  const finalContent = rawContent
+  const strippedContent = rawContent
     .replace(/^META_TITLE:.*$/m, "")
     .replace(/^META_DESC:.*$/m, "")
     .replace(/^\n+/, "")
+    .trim();
+
+  // ── AI-PATTERN SAFETY NET ────────────────────────────────────────────────────
+  // Programmatically remove patterns that AI reliably reintroduces despite prompt instructions.
+  // This runs after Pass 3 so it catches whatever slips through.
+  const finalContent = strippedContent
+    // Em dashes — #1 AI tell, must be removed without exception
+    .replace(/ — /g, ", ")
+    .replace(/—/g, ", ")
+    // Sentence-starting AI transition words
+    .replace(/^Furthermore,\s*/gim, "And ")
+    .replace(/^Moreover,\s*/gim, "And ")
+    .replace(/^Additionally,\s*/gim, "Also, ")
+    .replace(/^In conclusion,\s*/gim, "So: ")
+    .replace(/^To summarize,\s*/gim, "")
+    .replace(/^In summary,\s*/gim, "")
+    // Filler phrases that add no information
+    .replace(/[Ii]t'?s worth noting that\s*/g, "")
+    .replace(/[Ii]t is worth noting that\s*/g, "")
+    .replace(/[Ii]t is important to note that\s*/g, "")
+    .replace(/[Ii]t's important to note that\s*/g, "")
+    .replace(/[Ii]n today'?s fast-paced world[,.]?\s*/g, "")
+    .replace(/[Aa]t the end of the day[,.]?\s*/g, "")
+    // Classic AI verb replacements
+    .replace(/\bdelve into\b/gi, "look at")
+    .replace(/\bdelves into\b/gi, "looks at")
+    .replace(/\bdelving into\b/gi, "looking at")
+    .replace(/\bdelved into\b/gi, "looked at")
+    .replace(/\bunpack\b/gi, "break down")
+    .replace(/\bunpacks\b/gi, "breaks down")
+    .replace(/\bunpacking\b/gi, "breaking down")
+    .replace(/\bunpacked\b/gi, "broke down")
+    .replace(/\bsupercharge\b/gi, "boost")
+    .replace(/\bsupercharges\b/gi, "boosts")
+    .replace(/\butilize\b/gi, "use")
+    .replace(/\butilizes\b/gi, "uses")
+    .replace(/\butilising\b/gi, "using")
+    .replace(/\butilising\b/gi, "using")
+    .replace(/\butilise\b/gi, "use")
+    // Unsung heroes
+    .replace(/unsung heroes? of\b/gi, "key part of")
+    .replace(/\bunsung heroes?\b/gi, "overlooked factors")
+    // Game-changer
+    .replace(/\bgame-changer\b/gi, "major shift")
+    .replace(/\bgame changer\b/gi, "major shift")
+    // Clean up any double spaces or leading commas from replacements
+    .replace(/, ,/g, ",")
+    .replace(/,\s*\./g, ".")
+    .replace(/  +/g, " ")
     .trim();
 
   const totalTokens = p1InputTokens + p1OutputTokens + p2InputTokens + p2OutputTokens + p3InputTokens + p3OutputTokens;
@@ -557,13 +624,13 @@ ${pass2RawContent}`;
     (k) => !contentLower.includes(k.toLowerCase())
   );
 
-  // Extract meta title/desc if AI followed the format
-  const metaTitleMatch = finalContent.match(/META_TITLE:\s*(.+)/);
-  const metaDescMatch = finalContent.match(/META_DESC:\s*(.+)/);
+  // Extract meta title/desc from rawContent (before stripping)
+  const metaTitleMatch = rawContent.match(/META_TITLE:\s*(.+)/);
+  const metaDescMatch = rawContent.match(/META_DESC:\s*(.+)/);
   const metaTitle = metaTitleMatch?.[1]?.trim() ?? req.topic.substring(0, 60);
   const metaDescription =
     metaDescMatch?.[1]?.trim() ??
-    finalContent.replace(/#+\s|META_TITLE:.+|META_DESC:.+/g, "").substring(0, 155) + "...";
+    finalContent.replace(/#+\s/g, "").substring(0, 155) + "...";
 
   const sentences = finalContent.split(/[.!?]+/).filter((s) => s.trim().length > 10);
   const avgWordsPerSentence = wordCount / (sentences.length || 1);
