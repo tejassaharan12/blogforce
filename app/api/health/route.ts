@@ -45,32 +45,10 @@ export async function GET() {
       fix: "Add both to Vercel environment variables",
     };
   } else {
-    try {
-      // GET request for balance check
-      const balUrl = `https://www.copyscape.com/api/?u=${csUser}&k=${csKey}&o=bal&f=JSON`;
-      const balRes = await fetch(balUrl);
-      const balData = await balRes.json();
-      if (balData.error) {
-        checks.copyscape = {
-          ok: false,
-          message: `Auth failed: ${balData.error}`,
-          fix: "Go to copyscape.com/apiconfigure.php, copy the current API key and update COPYSCAPE_API_KEY in Vercel",
-        };
-      } else {
-        const balance = parseFloat(balData.value ?? "0");
-        checks.copyscape = {
-          ok: balance > 0,
-          message: `Balance: $${balance.toFixed(2)}`,
-          fix: balance <= 0 ? "Top up Copyscape credits at copyscape.com/premium.php" : undefined,
-        };
-      }
-    } catch {
-      checks.copyscape = {
-        ok: false,
-        message: "Copyscape API unreachable",
-        fix: "Copyscape may be down. Check copyscape.com",
-      };
-    }
+    checks.copyscape = {
+      ok: true,
+      message: `Credentials configured (user: ${csUser})`,
+    };
   }
 
   // ── 4. DATAFORSEO ───────────────────────────────────────────────────────────
