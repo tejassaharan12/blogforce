@@ -395,13 +395,27 @@ UNIVERSAL RULES (apply to all brands):
 
 ${brandVoiceGuide || "Default tone: warm, honest, direct, knowledgeable but approachable. Like advice from a trusted friend who happens to be a doctor."}${userVoiceHint}`;
 
-  const pass2User = `Humanise this healthcare article while keeping all facts, structure, keywords, warnings, and disclaimer intact:
+  const pass2TargetWords =
+    req.target_length === "500" ? "400–500" :
+    req.target_length === "800" ? "700–820" :
+    req.target_length === "1200" ? "1,100–1,280" :
+    req.target_length === "2000" ? "1,850–2,050" :
+    "900–1,050";
+
+  const pass2MaxTokens =
+    req.target_length === "500" ? 900 :
+    req.target_length === "800" ? 1600 :
+    req.target_length === "1200" ? 3000 :
+    req.target_length === "2000" ? 4000 :
+    2200;
+
+  const pass2User = `Humanise this healthcare article. STRICT word count: ${pass2TargetWords} words — do NOT expand the content, only rephrase it. Keep all facts, structure, keywords, warnings, and disclaimer intact:
 
 ${pass1Content}`;
 
   const pass2Response = await client.messages.create({
     model: MODEL,
-    max_tokens: 2500,
+    max_tokens: pass2MaxTokens,
     system: pass2System,
     messages: [{ role: "user", content: pass2User }],
   });
@@ -421,7 +435,7 @@ ${pass1Content}`;
     .replace(/^\n+/, "")
     .trim();
 
-  const stealthResult = await humanizeContent(bodyForStealth);
+  const stealthResult = await humanizeContent(bodyForStealth, req.target_length);
   const stealthCostInr = stealthResult.cost_usd * 85;
 
   // Strip meta lines from visible content — stored in seo.meta_title/meta_description

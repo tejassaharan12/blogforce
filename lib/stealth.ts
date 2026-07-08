@@ -7,9 +7,12 @@ export interface StealthResult {
   cost_usd: number;
 }
 
-export async function humanizeContent(text: string): Promise<StealthResult> {
+export async function humanizeContent(text: string, targetLength?: string): Promise<StealthResult> {
   const apiKey = process.env.STEALTHGPT_API_KEY;
   if (!apiKey) throw new Error("STEALTHGPT_API_KEY not configured");
+
+  // Use Lower mode for short blogs to prevent word count expansion
+  const mode = targetLength === "500" ? "Low" : targetLength === "800" ? "Medium" : "High";
 
   const res = await fetch(STEALTH_API_URL, {
     method: "POST",
@@ -21,7 +24,7 @@ export async function humanizeContent(text: string): Promise<StealthResult> {
       prompt: text,
       rephrase: true,
       tone: "College",
-      mode: "High",
+      mode,
       qualityMode: "quality",
       model: "heavy",
       outputFormat: "markdown",
