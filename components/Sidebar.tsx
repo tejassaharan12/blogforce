@@ -1,8 +1,8 @@
 "use client";
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname } from "next/navigation";
-import { LayoutDashboard, PenLine, BookOpen, BarChart2 } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import { LayoutDashboard, PenLine, BookOpen, BarChart2, LogOut } from "lucide-react";
 import clsx from "clsx";
 
 const nav = [
@@ -14,6 +14,13 @@ const nav = [
 
 export default function Sidebar() {
   const path = usePathname();
+  const router = useRouter();
+
+  async function handleLogout() {
+    await fetch("/api/auth/logout", { method: "POST" });
+    router.push("/login");
+    router.refresh();
+  }
   return (
     <aside className="fixed left-0 top-0 h-screen w-64 bg-ink-900/80 backdrop-blur-xl border-r border-white/[0.06] flex flex-col z-20">
       <div className="px-5 py-6 border-b border-white/[0.05]">
@@ -57,10 +64,16 @@ export default function Sidebar() {
           </Link>
         ))}
       </nav>
-      <div className="px-6 py-5 border-t border-white/[0.06]">
-        <p className="text-[11px] text-zinc-500 leading-relaxed">
-          Story Digital
-          <span className="block text-zinc-600">Agency Tool · v1.0</span>
+      <div className="px-3 py-4 border-t border-white/[0.06] space-y-2">
+        <button
+          onClick={handleLogout}
+          className="flex items-center gap-3 w-full px-3.5 py-2.5 rounded-xl text-sm font-medium text-zinc-500 hover:text-red-400 hover:bg-red-500/[0.06] border border-transparent transition-all duration-200"
+        >
+          <LogOut className="w-4 h-4" />
+          Sign out
+        </button>
+        <p className="text-[11px] text-zinc-600 px-3">
+          Story Digital · Agency Tool
         </p>
       </div>
     </aside>
