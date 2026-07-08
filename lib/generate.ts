@@ -323,6 +323,18 @@ E-E-A-T SIGNALS (required for Google health content ranking):
 - AUTHORITATIVENESS: Reference credible Indian health bodies where relevant — ICMR, NIN (National Institute of Nutrition), FSSAI, AYUSH Ministry, WHO. Do NOT fabricate specific study names or statistics — use references like "According to ICMR dietary guidelines..." or "Research suggests..."
 - TRUSTWORTHINESS: Include the required medical disclaimer, use measured language throughout, never overclaim
 
+AEO — ANSWER ENGINE OPTIMIZATION (featured snippets & Google AI Overviews):
+- DIRECT ANSWER PARAGRAPH: Within the first 150 words, write one clean 40–60 word paragraph that directly answers the main query. Start it with the primary keyword. This is what Google and AI engines pull for featured snippets.
+- FAQ FORMAT: Every FAQ question must follow this exact format so Google can extract it:
+  **Q: [Full question ending with ?]**
+  [Direct 2–3 sentence answer with no preamble]
+- Cite sources using: "According to [ICMR / WHO / NIN / FSSAI / AYUSH Ministry], ..." — at least 2 times in the article
+
+GEO — GENERATIVE ENGINE OPTIMIZATION (AI search: Perplexity, ChatGPT, Google SGE):
+- Write at least 3 CITABLE FACTUAL STATEMENTS — clear declarative sentences that an AI model can extract and attribute. Format: "[Subject] [factual verb] [specific fact]." Example: "Cumin seeds contain compounds that relax intestinal muscles and reduce gas pressure."
+- DEFINE KEY ENTITIES clearly the first time you mention them: what the condition is, what the ingredient does, how the product works — in one direct sentence. AI engines use these definitions.
+- Open each main section with a factual, citable statement — not a question, not a vague opener.
+
 SEO REQUIREMENTS:
 - Include these keywords naturally (no stuffing): ${keywordsStr}
 - Use ## for main headings, ### for subheadings
@@ -364,11 +376,11 @@ ${planKeywordSection}
 Prioritise accuracy, natural keyword placement, proper structure, and full compliance.`;
 
   const maxOutputTokens =
-    req.target_length === "2000" ? 2800 :
-    req.target_length === "1200" ? 1800 :
-    req.target_length === "800" ? 1100 :
-    req.target_length === "500" ? 700 :
-    1500;
+    req.target_length === "2000" ? 5000 :
+    req.target_length === "1200" ? 3000 :
+    req.target_length === "800" ? 1800 :
+    req.target_length === "500" ? 1000 :
+    2000;
 
   const pass1Response = await client.messages.create({
     model: MODEL,
@@ -425,11 +437,11 @@ ${brandVoiceGuide || "Default tone: warm, honest, direct, knowledgeable but appr
     "720–800";
 
   const pass2MaxTokens =
-    req.target_length === "500" ? 700 :
-    req.target_length === "800" ? 1100 :
-    req.target_length === "1200" ? 1800 :
-    req.target_length === "2000" ? 3000 :
-    1500;
+    req.target_length === "500" ? 1000 :
+    req.target_length === "800" ? 1800 :
+    req.target_length === "1200" ? 3000 :
+    req.target_length === "2000" ? 5000 :
+    2000;
 
   const pass2User = `Humanise this healthcare article. STRICT word count: ${pass2TargetWords} words — do NOT expand the content, only rephrase it. Keep all facts, structure, keywords, warnings, and disclaimer intact:
 
@@ -551,6 +563,28 @@ ${pass1Content}`;
   const readability =
     avgWordsPerSentence < 15 ? "Easy" : avgWordsPerSentence < 20 ? "Medium" : "Complex";
 
+  // ── FAQ EXTRACTION FOR FAQPage SCHEMA ──────────────────────────────────────
+  // Looks for bold Q: questions in the FAQ section and pairs them with the next paragraph
+  function extractFaqItems(content: string): { question: string; answer: string }[] {
+    const items: { question: string; answer: string }[] = [];
+    const faqMatch = content.match(/##[^\n]*(?:FAQ|Frequently Asked|Common Questions?)[^\n]*\n([\s\S]+?)(?=\n##|$)/i);
+    if (!faqMatch) return items;
+    const body = faqMatch[1];
+    const pattern = /\*\*Q[^*]*\?[^*]*\*\*\s*\n+((?:[^*\n#][^\n]*\n?)+)/g;
+    let m: RegExpExecArray | null;
+    while ((m = pattern.exec(body)) !== null && items.length < 10) {
+      const qMatch = m[0].match(/\*\*([^*]+)\*\*/);
+      if (qMatch) {
+        items.push({
+          question: qMatch[1].replace(/^Q\d*[:.]\s*/i, "").trim(),
+          answer: m[1].replace(/\n+/g, " ").trim().substring(0, 400),
+        });
+      }
+    }
+    return items;
+  }
+  const faqItems = extractFaqItems(finalContent);
+
   // ── AEO SIGNALS ─────────────────────────────────────────────────────────────
   const hasFaq =
     contentLower.includes("?") &&
@@ -577,25 +611,60 @@ ${pass1Content}`;
       meta_title: metaTitle,
       meta_description: metaDescription,
       url_slug: req.topic.toLowerCase().replace(/[^a-z0-9\s]/g, "").trim().replace(/\s+/g, "-").substring(0, 80),
-      suggested_schema: JSON.stringify({
-        "@context": "https://schema.org",
-        "@type": "BlogPosting",
-        "headline": metaTitle,
-        "description": metaDescription,
-        "author": { "@type": "Organization", "name": "Story Digital" },
-        "publisher": {
-          "@type": "Organization",
-          "name": "Story Digital",
-          "logo": { "@type": "ImageObject", "url": "https://www.storydigital.in/logo.png" }
-        },
-        "datePublished": new Date().toISOString(),
-        "dateModified": new Date().toISOString(),
-        "wordCount": wordCount,
-        "keywords": req.keywords.join(", "),
-        "articleSection": "Health & Wellness",
-        "inLanguage": "en-IN",
-        "about": { "@type": "Thing", "name": req.topic }
-      }, null, 2),
+      suggested_schema: JSON.stringify(
+        faqItems.length > 0
+          ? [
+              {
+                "@context": "https://schema.org",
+                "@type": "BlogPosting",
+                "headline": metaTitle,
+                "description": metaDescription,
+                "author": { "@type": "Organization", "name": "Story Digital" },
+                "publisher": {
+                  "@type": "Organization",
+                  "name": "Story Digital",
+                  "logo": { "@type": "ImageObject", "url": "https://www.storydigital.in/logo.png" }
+                },
+                "datePublished": new Date().toISOString(),
+                "dateModified": new Date().toISOString(),
+                "wordCount": wordCount,
+                "keywords": req.keywords.join(", "),
+                "articleSection": "Health & Wellness",
+                "inLanguage": "en-IN",
+                "about": { "@type": "Thing", "name": req.topic }
+              },
+              {
+                "@context": "https://schema.org",
+                "@type": "FAQPage",
+                "mainEntity": faqItems.map(item => ({
+                  "@type": "Question",
+                  "name": item.question,
+                  "acceptedAnswer": { "@type": "Answer", "text": item.answer }
+                }))
+              }
+            ]
+          : {
+              "@context": "https://schema.org",
+              "@type": "BlogPosting",
+              "headline": metaTitle,
+              "description": metaDescription,
+              "author": { "@type": "Organization", "name": "Story Digital" },
+              "publisher": {
+                "@type": "Organization",
+                "name": "Story Digital",
+                "logo": { "@type": "ImageObject", "url": "https://www.storydigital.in/logo.png" }
+              },
+              "datePublished": new Date().toISOString(),
+              "dateModified": new Date().toISOString(),
+              "wordCount": wordCount,
+              "keywords": req.keywords.join(", "),
+              "articleSection": "Health & Wellness",
+              "inLanguage": "en-IN",
+              "about": { "@type": "Thing", "name": req.topic }
+            },
+        null,
+        2
+      ),
     },
     aeo: {
       has_faq_structure: hasFaq,
