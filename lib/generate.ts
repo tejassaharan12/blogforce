@@ -478,7 +478,7 @@ IRON RULES — never break these:
 ${pass2RawContent}`;
 
   const pass3Response = await client.messages.create({
-    model: HAIKU_MODEL,
+    model: MODEL,
     max_tokens: 4000,
     system: pass3System,
     messages: [{ role: "user", content: pass3User }],
@@ -487,7 +487,7 @@ ${pass2RawContent}`;
   const rawContent = (pass3Response.content[0] as { type: string; text: string }).text;
   const p3InputTokens = pass3Response.usage.input_tokens;
   const p3OutputTokens = pass3Response.usage.output_tokens;
-  const pass3Cost = calcHaikuCost(p3InputTokens, p3OutputTokens);
+  const pass3Cost = calcCost(p3InputTokens, p3OutputTokens);
 
   // Strip meta lines from visible content — stored in seo.meta_title/meta_description
   const finalContent = rawContent

@@ -63,7 +63,7 @@ const AGENT_STEPS = [
   { name: "Compliance Pre-Scanner", detail: "Loading CDSCO ruleset · Drug & Cosmetics Act §3.1" },
   { name: "Writing Agent — Pass 1", detail: "Claude Opus 4.8 · Medical accuracy & structure" },
   { name: "Brand Voice Agent — Pass 2", detail: "Claude Opus 4.8 · Humanizing with brand personality" },
-  { name: "Human-Style Editor — Pass 3", detail: "Claude Haiku · Burstiness · removing AI patterns" },
+  { name: "Human-Style Editor — Pass 3", detail: "Claude Opus 4.8 · Burstiness · eliminating AI patterns" },
   { name: "Plagiarism Scanner", detail: "Copyscape Premium · live web comparison" },
   { name: "SEO Intelligence", detail: "DataForSEO · India search volume & CPC metrics" },
   { name: "Compliance Validator", detail: "Final pharma safety sweep · risk scoring" },
