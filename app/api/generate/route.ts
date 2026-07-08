@@ -20,6 +20,21 @@ export async function POST(req: NextRequest) {
         ? keywords.split(",").map((k: string) => k.trim()).filter(Boolean)
         : keywords;
 
+    // Duplicate guard — block same brand+topic within 2 minutes
+    const recentBlogs = await blogsDb.getAll();
+    const twoMinsAgo = new Date(Date.now() - 2 * 60 * 1000).toISOString();
+    const duplicate = recentBlogs.find(
+      (b) => b.brand === brand &&
+             b.topic.trim().toLowerCase() === topic.trim().toLowerCase() &&
+             b.created_at > twoMinsAgo
+    );
+    if (duplicate) {
+      return NextResponse.json(
+        { error: `This blog was just generated (ID #${duplicate.id}). Check All Blogs to view it.` },
+        { status: 409 }
+      );
+    }
+
     // Get current month's spend to enforce budget cap
     const monthly = await blogsDb.getMonthlyUsage();
     const currentMonth = new Date().toISOString().slice(0, 7);

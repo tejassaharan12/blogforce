@@ -314,14 +314,13 @@ FORMAT: ${formatGuide}
 SEO REQUIREMENTS:
 - Include these keywords naturally (no stuffing): ${keywordsStr}
 - Use ## for main headings, ### for subheadings
-- Include a FAQ section with at least 5 questions at the end
-- Word count: ${
-      req.target_length === "500" ? "450–550" :
-      req.target_length === "800" ? "750–850" :
-      req.target_length === "1200" ? "1,150–1,300" :
-      req.target_length === "2000" ? "1,900–2,100" :
-      "950–1,100"
-    } words
+- STRICT word count: ${
+      req.target_length === "500" ? "450–530 words MAXIMUM. Stop writing once you reach 530 words. No FAQ section." :
+      req.target_length === "800" ? "750–850 words. Include a short FAQ with 2–3 questions only." :
+      req.target_length === "1200" ? "1,150–1,300 words. Include a FAQ section with 4–5 questions." :
+      req.target_length === "2000" ? "1,900–2,100 words. Include a comprehensive FAQ section with 6–8 questions." :
+      "950–1,100 words. Include a FAQ section with 3–4 questions."
+    }
 - Write meta title (under 60 chars) and meta description (under 155 chars) at the very top in this format:
   META_TITLE: your title here
   META_DESC: your description here
@@ -342,7 +341,12 @@ Keywords to include: ${keywordsStr}
 
 Prioritise accuracy, natural keyword placement, proper structure, and full compliance.`;
 
-  const maxOutputTokens = req.target_length === "2000" ? 4000 : req.target_length === "1200" ? 3000 : 2500;
+  const maxOutputTokens =
+    req.target_length === "2000" ? 4000 :
+    req.target_length === "1200" ? 3000 :
+    req.target_length === "800" ? 1800 :
+    req.target_length === "500" ? 1000 :
+    2500;
 
   const pass1Response = await client.messages.create({
     model: MODEL,
