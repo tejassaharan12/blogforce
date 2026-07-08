@@ -1,17 +1,8 @@
 import { NextResponse } from "next/server";
 import * as XLSX from "xlsx";
+import type { PlanBlog } from "@/lib/plan-data";
 
-export interface PlanBlog {
-  month: string;
-  cluster: string;
-  content_type: string;
-  blog_title: string;
-  primary_keyword: string;
-  secondary_keywords: string;
-  lsi_keywords: string;
-  content_angle: string;
-  cta_link: string;
-}
+export type { PlanBlog };
 
 // Maps plan content types to BlogForce generate API content_type values
 function mapContentType(planType: string): string {
