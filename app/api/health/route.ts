@@ -90,7 +90,12 @@ export async function GET(req: Request) {
     }
   }
 
-  // ── 5. RESEND ───────────────────────────────────────────────────────────────
+  // ── 5. SENTRY ───────────────────────────────────────────────────────────────
+  checks.sentry = process.env.NEXT_PUBLIC_SENTRY_DSN
+    ? { ok: true, message: "Error monitoring active" }
+    : { ok: false, message: "NEXT_PUBLIC_SENTRY_DSN not set — app errors won't be tracked", fix: "Add NEXT_PUBLIC_SENTRY_DSN to Vercel environment variables" };
+
+  // ── 6. RESEND ───────────────────────────────────────────────────────────────
   checks.resend = process.env.RESEND_API_KEY
     ? { ok: true, message: "Email alerts configured" }
     : { ok: false, message: "RESEND_API_KEY not set — error emails will not be sent", fix: "Add RESEND_API_KEY to Vercel environment variables" };
