@@ -8,8 +8,8 @@ const nextConfig = {
 };
 
 module.exports = withSentryConfig(nextConfig, {
-  org: "blogforce",
-  project: "blogforce",
+  org: "story-digital",
+  project: "javascript-nextjs-91",
   silent: true,
   widenClientFileUpload: true,
   hideSourceMaps: true,
