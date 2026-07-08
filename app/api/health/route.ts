@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { blogsDb } from "@/lib/db";
+import { sendAlert } from "@/lib/email";
 
 export const dynamic = "force-dynamic";
 
@@ -9,7 +10,7 @@ interface Check {
   fix?: string;
 }
 
-export async function GET() {
+export async function GET(req: Request) {
   const checks: Record<string, Check> = {};
 
   // ── 1. DATABASE ─────────────────────────────────────────────────────────────
@@ -129,6 +130,16 @@ export async function GET() {
 
   const allOk = Object.values(checks).every((c) => c.ok);
   const issues = Object.entries(checks).filter(([, c]) => !c.ok);
+
+  // Send email alert when called by UptimeRobot and something is broken
+  if (!allOk && req.headers.get("user-agent")?.toLowerCase().includes("uptimerobot")) {
+    const details = issues.map(([k, c]) => `${k}: ${c.message}${c.fix ? `\nFix: ${c.fix}` : ""}`).join("\n\n");
+    await sendAlert({
+      type: "service_down",
+      title: `${issues.length} service${issues.length > 1 ? "s" : ""} down: ${issues.map(([k]) => k).join(", ")}`,
+      details,
+    });
+  }
 
   return NextResponse.json(
     {

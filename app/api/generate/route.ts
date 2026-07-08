@@ -2,10 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { generateBlog } from "@/lib/generate";
 import { blogsDb } from "@/lib/db";
 import type { BrandKey } from "@/lib/compliance";
+import { sendAlert } from "@/lib/email";
 
 export async function POST(req: NextRequest) {
+  let body: Record<string, string> = {};
   try {
-    const body = await req.json();
+    body = await req.json();
     const { brand, topic, keywords, target_audience, content_type, brand_voice_hint } = body;
 
     if (!brand || !topic || !keywords || !target_audience || !content_type) {
@@ -87,8 +89,23 @@ export async function POST(req: NextRequest) {
 
     // Budget cap error — return 402 Payment Required so frontend can show specific message
     if (message.includes("budget cap") || message.includes("exceed your monthly budget")) {
+      await sendAlert({
+        type: "budget_warning",
+        title: "Monthly budget cap reached",
+        details: message,
+        brand: body?.brand,
+        topic: body?.topic,
+      });
       return NextResponse.json({ error: message, code: "BUDGET_EXCEEDED" }, { status: 402 });
     }
+
+    await sendAlert({
+      type: "generation_error",
+      title: "Blog generation failed",
+      details: message,
+      brand: body?.brand,
+      topic: body?.topic,
+    });
 
     return NextResponse.json({ error: message }, { status: 500 });
   }
