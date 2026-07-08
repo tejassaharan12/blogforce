@@ -11,8 +11,8 @@ export async function humanizeContent(text: string, targetLength?: string): Prom
   const apiKey = process.env.STEALTHGPT_API_KEY;
   if (!apiKey) throw new Error("STEALTHGPT_API_KEY not configured");
 
-  // Use Lower mode for short blogs to prevent word count expansion
-  const mode = targetLength === "500" ? "Low" : targetLength === "800" ? "Medium" : "High";
+  // Always use High mode — best humanization quality regardless of length
+  const mode = "High";
 
   const res = await fetch(STEALTH_API_URL, {
     method: "POST",

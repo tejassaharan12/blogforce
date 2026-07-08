@@ -315,12 +315,12 @@ SEO REQUIREMENTS:
 - Include these keywords naturally (no stuffing): ${keywordsStr}
 - Use ## for main headings, ### for subheadings
 - STRICT word count: ${
-      req.target_length === "500" ? "450–530 words MAXIMUM. Stop writing once you reach 530 words. No FAQ section." :
-      req.target_length === "800" ? "750–850 words. Include a short FAQ with 2–3 questions only." :
-      req.target_length === "1200" ? "1,150–1,300 words. Include a FAQ section with 4–5 questions." :
-      req.target_length === "2000" ? "1,900–2,100 words. Include a comprehensive FAQ section with 6–8 questions." :
-      "950–1,100 words. Include a FAQ section with 3–4 questions."
-    }
+      req.target_length === "500" ? "350–390 words MAXIMUM. Stop at 390 words. No FAQ section." :
+      req.target_length === "800" ? "580–630 words. Include a short FAQ with 2–3 questions only." :
+      req.target_length === "1200" ? "880–980 words. Include a FAQ section with 4–5 questions." :
+      req.target_length === "2000" ? "1,500–1,600 words. Include a comprehensive FAQ section with 6–8 questions." :
+      "720–800 words. Include a FAQ section with 3–4 questions."
+    } (StealthGPT will expand this ~30% to reach the final target)
 - Write meta title (under 60 chars) and meta description (under 155 chars) at the very top in this format:
   META_TITLE: your title here
   META_DESC: your description here
@@ -342,11 +342,11 @@ Keywords to include: ${keywordsStr}
 Prioritise accuracy, natural keyword placement, proper structure, and full compliance.`;
 
   const maxOutputTokens =
-    req.target_length === "2000" ? 4000 :
-    req.target_length === "1200" ? 3000 :
-    req.target_length === "800" ? 1800 :
-    req.target_length === "500" ? 1000 :
-    2500;
+    req.target_length === "2000" ? 2800 :
+    req.target_length === "1200" ? 1800 :
+    req.target_length === "800" ? 1100 :
+    req.target_length === "500" ? 700 :
+    1500;
 
   const pass1Response = await client.messages.create({
     model: MODEL,
@@ -396,18 +396,18 @@ UNIVERSAL RULES (apply to all brands):
 ${brandVoiceGuide || "Default tone: warm, honest, direct, knowledgeable but approachable. Like advice from a trusted friend who happens to be a doctor."}${userVoiceHint}`;
 
   const pass2TargetWords =
-    req.target_length === "500" ? "400–500" :
-    req.target_length === "800" ? "700–820" :
-    req.target_length === "1200" ? "1,100–1,280" :
-    req.target_length === "2000" ? "1,850–2,050" :
-    "900–1,050";
+    req.target_length === "500" ? "350–390" :
+    req.target_length === "800" ? "580–630" :
+    req.target_length === "1200" ? "880–980" :
+    req.target_length === "2000" ? "1,500–1,600" :
+    "720–800";
 
   const pass2MaxTokens =
-    req.target_length === "500" ? 900 :
-    req.target_length === "800" ? 1600 :
-    req.target_length === "1200" ? 3000 :
-    req.target_length === "2000" ? 4000 :
-    2200;
+    req.target_length === "500" ? 700 :
+    req.target_length === "800" ? 1100 :
+    req.target_length === "1200" ? 1800 :
+    req.target_length === "2000" ? 3000 :
+    1500;
 
   const pass2User = `Humanise this healthcare article. STRICT word count: ${pass2TargetWords} words — do NOT expand the content, only rephrase it. Keep all facts, structure, keywords, warnings, and disclaimer intact:
 
