@@ -317,6 +317,12 @@ ${warnings.map((w, i) => `${i + 1}. ${w}`).join("\n")}
 
 FORMAT: ${formatGuide}
 
+E-E-A-T SIGNALS (required for Google health content ranking):
+- EXPERTISE: Explain the mechanism or science behind each recommendation — not just "what" but "why it works"
+- EXPERIENCE: Use practical, grounded examples a real person with this condition would recognise
+- AUTHORITATIVENESS: Reference credible Indian health bodies where relevant — ICMR, NIN (National Institute of Nutrition), FSSAI, AYUSH Ministry, WHO. Do NOT fabricate specific study names or statistics — use references like "According to ICMR dietary guidelines..." or "Research suggests..."
+- TRUSTWORTHINESS: Include the required medical disclaimer, use measured language throughout, never overclaim
+
 SEO REQUIREMENTS:
 - Include these keywords naturally (no stuffing): ${keywordsStr}
 - Use ## for main headings, ### for subheadings

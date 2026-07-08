@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { Upload, Loader2, CheckCircle2, XCircle, ExternalLink, ChevronDown } from "lucide-react";
 import clsx from "clsx";
 import { PLAN_DATA, type PlanBlog } from "@/lib/plan-data";
@@ -42,14 +42,41 @@ export default function PlanPage() {
   // Use custom uploaded plan if available, otherwise built-in data
   const blogs: PlanBlog[] = customBlogs ?? PLAN_DATA[brand] ?? [];
 
-  // Reset statuses when brand changes (only if using built-in data)
-  function handleBrandChange(newBrand: string) {
-    setBrand(newBrand);
-    if (!customBlogs) setStatuses({});
-  }
-
   function statusKey(index: number) {
     return `${brand}-${index}`;
+  }
+
+  // On brand change: fetch generated blogs from DB and pre-mark matching titles
+  const loadGeneratedStatuses = useCallback(async (selectedBrand: string, planBlogs: PlanBlog[]) => {
+    try {
+      const res = await fetch(`/api/blogs?brand=${selectedBrand}`);
+      if (!res.ok) return;
+      const generated: { id: number; topic: string }[] = await res.json();
+      const normalized = generated.map(b => ({ id: b.id, topic: b.topic.trim().toLowerCase() }));
+      setStatuses(prev => {
+        const next = { ...prev };
+        planBlogs.forEach((blog, i) => {
+          const key = `${selectedBrand}-${i}`;
+          // Only pre-mark if not already set in this session
+          if (!prev[key] || prev[key].type === "pending") {
+            const match = normalized.find(b => b.topic === blog.blog_title.trim().toLowerCase());
+            if (match) next[key] = { type: "done", blogId: match.id };
+          }
+        });
+        return next;
+      });
+    } catch {
+      // Fail silently — plan still works without DB check
+    }
+  }, []);
+
+  useEffect(() => {
+    const planBlogs = customBlogs ?? PLAN_DATA[brand] ?? [];
+    loadGeneratedStatuses(brand, planBlogs);
+  }, [brand, customBlogs, loadGeneratedStatuses]);
+
+  function handleBrandChange(newBrand: string) {
+    setBrand(newBrand);
   }
 
   async function handleFile(file: File) {
@@ -276,13 +303,22 @@ export default function PlanPage() {
                         </span>
                       )}
                       {status.type === "done" && (
-                        <a
-                          href="/blogs"
-                          className="flex items-center justify-end gap-1.5 text-xs text-green-400 hover:text-green-300 transition-colors"
-                        >
-                          <CheckCircle2 className="w-3.5 h-3.5" />
-                          View blog
-                        </a>
+                        <div className="flex flex-col items-end gap-1">
+                          <a
+                            href="/blogs"
+                            className="flex items-center gap-1.5 text-xs text-green-400 hover:text-green-300 transition-colors"
+                          >
+                            <CheckCircle2 className="w-3.5 h-3.5" />
+                            Generated
+                          </a>
+                          <button
+                            onClick={() => generateBlog(i)}
+                            disabled={isGenerating}
+                            className="text-[10px] text-zinc-600 hover:text-zinc-400 transition-colors disabled:opacity-40"
+                          >
+                            Regenerate
+                          </button>
+                        </div>
                       )}
                       {status.type === "error" && (
                         <button
