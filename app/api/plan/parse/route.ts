@@ -4,12 +4,30 @@ import * as XLSX from "xlsx";
 export interface PlanBlog {
   month: string;
   cluster: string;
+  content_type: string;
   blog_title: string;
   primary_keyword: string;
   secondary_keywords: string;
   lsi_keywords: string;
   content_angle: string;
   cta_link: string;
+}
+
+// Maps plan content types to BlogForce generate API content_type values
+function mapContentType(planType: string): string {
+  const t = planType.toLowerCase();
+  if (t.includes("faq") || t.includes("bofu")) return "faq";
+  if (t.includes("pillar") || t.includes("comparison") || t.includes("guide")) return "guide";
+  return "blog";
+}
+
+// Normalise multiline keyword cells — Google Sheets wraps multiple keywords across lines
+function cleanKeywords(raw: string): string {
+  return raw
+    .split(/[\n\r]+/)
+    .map((k) => k.trim())
+    .filter(Boolean)
+    .join(", ");
 }
 
 export async function POST(req: Request) {
@@ -43,9 +61,9 @@ export async function POST(req: Request) {
     for (let i = 1; i < rawRows.length; i++) {
       const row = rawRows[i];
       const blogTitle = row[3];
-      const contentType = row[2];
 
-      if (!blogTitle || (contentType && contentType.toString().toLowerCase() !== "blog")) continue;
+      // Skip empty rows — accept all content types (Blog, Pillar, FAQ, Informational, etc.)
+      if (!blogTitle || String(blogTitle).trim() === "") continue;
 
       // Row number in spreadsheet (1-based), accounting for header row
       const sheetRowNum = i + 1;
@@ -60,14 +78,17 @@ export async function POST(req: Request) {
         if (ctaLink.includes("?")) ctaLink = ctaLink.split("?")[0];
       }
 
+      const rawContentType = String(row[2] ?? "blog");
+
       blogs.push({
         month: String(row[0] ?? ""),
         cluster: String(row[1] ?? ""),
-        blog_title: String(blogTitle),
-        primary_keyword: String(row[4] ?? ""),
-        secondary_keywords: String(row[5] ?? ""),
-        lsi_keywords: String(row[6] ?? ""),
-        content_angle: String(row[7] ?? ""),
+        content_type: mapContentType(rawContentType),
+        blog_title: String(blogTitle).replace(/[\n\r]+/g, " ").trim(),
+        primary_keyword: cleanKeywords(String(row[4] ?? "")),
+        secondary_keywords: cleanKeywords(String(row[5] ?? "")),
+        lsi_keywords: cleanKeywords(String(row[6] ?? "")),
+        content_angle: String(row[7] ?? "").replace(/[\n\r]+/g, " ").trim(),
         cta_link: ctaLink,
       });
     }

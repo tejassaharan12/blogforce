@@ -80,7 +80,7 @@ export default function PlanPage() {
         topic: blog.blog_title,
         keywords: keywords.join(", "),
         target_audience: BRAND_AUDIENCE[brand] ?? "general",
-        content_type: "blog",
+        content_type: blog.content_type || "blog",
         target_length: targetLength,
         primary_keyword: blog.primary_keyword,
         secondary_keywords: blog.secondary_keywords,
@@ -251,6 +251,7 @@ export default function PlanPage() {
                       </td>
                       <td className="px-4 py-3.5">
                         <p className="text-white font-medium text-sm leading-snug">{blog.blog_title}</p>
+                        <span className="text-[10px] text-zinc-600 uppercase tracking-wider">{blog.content_type}</span>
                         {status.type === "error" && (
                           <p className="text-xs text-red-400 mt-0.5 leading-snug">{status.message}</p>
                         )}
