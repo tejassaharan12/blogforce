@@ -63,7 +63,8 @@ const AGENT_STEPS = [
   { name: "Compliance Pre-Scanner", detail: "Loading CDSCO ruleset · Drug & Cosmetics Act §3.1" },
   { name: "Writing Agent — Pass 1", detail: "Claude Opus 4.8 · Medical accuracy & structure" },
   { name: "Brand Voice Agent — Pass 2", detail: "Claude Opus 4.8 · Humanizing with brand personality" },
-  { name: "Plagiarism Scanner", detail: "N-gram similarity · cross-referencing 50B+ pages" },
+  { name: "Human-Style Editor — Pass 3", detail: "Claude Haiku · Burstiness · removing AI patterns" },
+  { name: "Plagiarism Scanner", detail: "Copyscape Premium · live web comparison" },
   { name: "SEO Intelligence", detail: "DataForSEO · India search volume & CPC metrics" },
   { name: "Compliance Validator", detail: "Final pharma safety sweep · risk scoring" },
 ];
@@ -116,11 +117,14 @@ interface GenerateResult {
     pass1_output: number;
     pass2_input: number;
     pass2_output: number;
+    pass3_input: number;
+    pass3_output: number;
     total: number;
   };
   cost_breakdown: {
     pass1_cost: number;
     pass2_cost: number;
+    pass3_cost: number;
     dataforseo_cost: number;
     copyscape_cost: number;
     total_cost: number;
@@ -831,7 +835,8 @@ function GeneratePageInner() {
                   <span className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">Total Cost</span>
                 </div>
                 <p className="text-2xl font-display font-semibold text-gold-300">₹{result.cost_inr.toFixed(2)}</p>
-                <p className="text-xs text-zinc-500 mt-1.5 font-mono">AI (P1+P2): ₹{(result.cost_breakdown.pass1_cost + result.cost_breakdown.pass2_cost).toFixed(3)}</p>
+                <p className="text-xs text-zinc-500 mt-1.5 font-mono">AI P1+P2: ₹{(result.cost_breakdown.pass1_cost + result.cost_breakdown.pass2_cost).toFixed(3)}</p>
+                <p className="text-xs text-zinc-500 font-mono">Editor P3: ₹{result.cost_breakdown.pass3_cost.toFixed(3)}</p>
                 {result.cost_breakdown.dataforseo_cost > 0 && (
                   <p className="text-xs text-zinc-500 font-mono">DataForSEO: ₹{result.cost_breakdown.dataforseo_cost.toFixed(3)}</p>
                 )}

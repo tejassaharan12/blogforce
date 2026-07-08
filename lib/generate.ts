@@ -14,11 +14,23 @@ const client = new Anthropic({
 });
 
 // Claude Opus 4.8 pricing in INR (at ₹85/USD)
-// Input: $15/MTok = ₹1,275/MTok
-// Output: $75/MTok = ₹6,375/MTok
+// Input: $15/MTok = ₹1,275/MTok  Output: $75/MTok = ₹6,375/MTok
 const MODEL = "claude-opus-4-8";
 const INPUT_COST_PER_MTok = 1275;
 const OUTPUT_COST_PER_MTok = 6375;
+
+// Claude Haiku 4.5 for Pass 3 (AI-detection bypass) — much cheaper
+// Input: $0.80/MTok = ₹68/MTok  Output: $4/MTok = ₹340/MTok
+const HAIKU_MODEL = "claude-haiku-4-5-20251001";
+const HAIKU_INPUT_COST_PER_MTok = 68;
+const HAIKU_OUTPUT_COST_PER_MTok = 340;
+
+function calcHaikuCost(inputTokens: number, outputTokens: number): number {
+  return (
+    (inputTokens / 1_000_000) * HAIKU_INPUT_COST_PER_MTok +
+    (outputTokens / 1_000_000) * HAIKU_OUTPUT_COST_PER_MTok
+  );
+}
 
 // Monthly budget cap in INR — generation stops and warns if exceeded
 const MONTHLY_BUDGET_CAP_INR = 3000;
@@ -66,12 +78,15 @@ export interface GenerateResult {
     pass1_output: number;
     pass2_input: number;
     pass2_output: number;
+    pass3_input: number;
+    pass3_output: number;
     total: number;
   };
   cost_inr: number;
   cost_breakdown: {
     pass1_cost: number;
     pass2_cost: number;
+    pass3_cost: number;
     dataforseo_cost: number;
     copyscape_cost: number;
     total_cost: number;
@@ -400,18 +415,88 @@ ${pass1Content}`;
     messages: [{ role: "user", content: pass2User }],
   });
 
-  const rawContent = (pass2Response.content[0] as { type: string; text: string }).text;
-  // Strip meta lines from visible content — they're stored in seo.meta_title/meta_description
+  const pass2RawContent = (pass2Response.content[0] as { type: string; text: string }).text;
+  const p2InputTokens = pass2Response.usage.input_tokens;
+  const p2OutputTokens = pass2Response.usage.output_tokens;
+  const pass2Cost = calcCost(p2InputTokens, p2OutputTokens);
+
+  // ── PASS 3: AI-DETECTION BYPASS (Claude Haiku) ──────────────────────────────
+  // Focus: burstiness, natural imperfections, kill AI phrases — without touching facts
+
+  const pass3System = `You are a senior Indian health journalist with 12 years of experience writing for publications like Times of India Health, Hindustan Times Lifestyle, and Health Shots.
+
+Your task: rewrite the article below so it sounds 100% like it was written by an experienced human journalist — not by AI. It must pass Grammarly's AI detector and similar tools with 0% AI-detected text.
+
+HOW AI DETECTORS CATCH AI WRITING — and how you fix each:
+
+1. UNIFORM SENTENCE LENGTH (biggest tell)
+   AI writes every sentence at similar length. Humans don't.
+   Fix: Aggressively mix sentence lengths. Use 3-word sentences. Then a medium one that explains the point. Then occasionally a longer, flowing sentence that builds on what you just said and connects naturally to the next thought — the way a journalist does when they want the reader to stay with them.
+
+2. PREDICTABLE AI PHRASES — delete every single one on sight:
+   "Furthermore" → use "And here's what's interesting:"
+   "Moreover" → use "What's more," or just cut it
+   "Additionally" → start fresh sentence with the point itself
+   "It is worth noting" → just say the thing
+   "In conclusion" → "So, what does this all mean?"
+   "It's important to" → just say it directly
+   "Delve into" → "look at" or "get into"
+   "Comprehensive" → "complete" or describe what it covers
+   "Leverage" → "use"
+   "Navigate" → just say what you mean
+   "In today's fast-paced world" → delete entirely, just start with the point
+
+3. PERFECT PARAGRAPHS (AI always writes 3-4 sentence paragraphs)
+   Humans break rules. They write one-sentence paragraphs.
+   Like this.
+   Then continue with more explanation.
+
+4. ROBOTIC TRANSITIONS
+   AI: "This leads us to our next point..."
+   Human: "But here's the thing." / "Sound familiar?" / "And that's exactly why..." / "Which brings us to..."
+
+5. MISSING PERSONALITY
+   Add: rhetorical questions ("Know the feeling?", "Sound familiar?", "Ever wondered why?")
+   Add: occasional em dashes — like this — for natural asides
+   Add: specific numbers instead of vague quantities ("about 3 in 4 Indians" not "many people")
+   Add: personal observations in second person ("Your stomach isn't being dramatic — it's sending you a signal.")
+
+6. CONTRACTIONS — use them everywhere
+   "do not" → "don't", "it is" → "it's", "you are" → "you're", "cannot" → "can't", "will not" → "won't", "they are" → "they're"
+
+IRON RULES — never break these:
+- Every medical fact, statistic, and claim stays exactly as written
+- All compliance warnings and safety language stays word-for-word
+- All keywords stay in place
+- All ## headings and ### subheadings stay
+- The disclaimer at the bottom stays unchanged
+- META_TITLE and META_DESC at the top stay unchanged
+- Do NOT add new medical claims or remove existing ones`;
+
+  const pass3User = `Rewrite this article to sound like it was written by an experienced Indian health journalist. Make it undetectable as AI. Follow all rules above exactly.
+
+${pass2RawContent}`;
+
+  const pass3Response = await client.messages.create({
+    model: HAIKU_MODEL,
+    max_tokens: 4000,
+    system: pass3System,
+    messages: [{ role: "user", content: pass3User }],
+  });
+
+  const rawContent = (pass3Response.content[0] as { type: string; text: string }).text;
+  const p3InputTokens = pass3Response.usage.input_tokens;
+  const p3OutputTokens = pass3Response.usage.output_tokens;
+  const pass3Cost = calcHaikuCost(p3InputTokens, p3OutputTokens);
+
+  // Strip meta lines from visible content — stored in seo.meta_title/meta_description
   const finalContent = rawContent
     .replace(/^META_TITLE:.*$/m, "")
     .replace(/^META_DESC:.*$/m, "")
     .replace(/^\n+/, "")
     .trim();
-  const p2InputTokens = pass2Response.usage.input_tokens;
-  const p2OutputTokens = pass2Response.usage.output_tokens;
-  const pass2Cost = calcCost(p2InputTokens, p2OutputTokens);
 
-  const totalTokens = p1InputTokens + p1OutputTokens + p2InputTokens + p2OutputTokens;
+  const totalTokens = p1InputTokens + p1OutputTokens + p2InputTokens + p2OutputTokens + p3InputTokens + p3OutputTokens;
 
   // ── COMPLIANCE CHECK ────────────────────────────────────────────────────────
   const compliance = checkCompliance(finalContent, req.brand);
@@ -423,7 +508,7 @@ ${pass1Content}`;
   const { metrics: keywordData, cost_usd: dfsUsd } = await getKeywordMetrics(req.keywords);
   const dataforseoCostInr = dfsUsd * 85;
   const copyscapeCostInr = plagiarism.cost_usd * 85;
-  const totalCost = pass1Cost + pass2Cost + dataforseoCostInr + copyscapeCostInr;
+  const totalCost = pass1Cost + pass2Cost + pass3Cost + dataforseoCostInr + copyscapeCostInr;
 
   // ── SEO ANALYSIS ────────────────────────────────────────────────────────────
   const words = finalContent.split(/\s+/).filter(Boolean);
@@ -512,12 +597,15 @@ ${pass1Content}`;
       pass1_output: p1OutputTokens,
       pass2_input: p2InputTokens,
       pass2_output: p2OutputTokens,
+      pass3_input: p3InputTokens,
+      pass3_output: p3OutputTokens,
       total: totalTokens,
     },
     cost_inr: parseFloat(totalCost.toFixed(4)),
     cost_breakdown: {
       pass1_cost: parseFloat(pass1Cost.toFixed(4)),
       pass2_cost: parseFloat(pass2Cost.toFixed(4)),
+      pass3_cost: parseFloat(pass3Cost.toFixed(4)),
       dataforseo_cost: parseFloat(dataforseoCostInr.toFixed(4)),
       copyscape_cost: parseFloat(copyscapeCostInr.toFixed(4)),
       total_cost: parseFloat(totalCost.toFixed(4)),
