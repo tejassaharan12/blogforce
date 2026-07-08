@@ -111,7 +111,18 @@ export async function GET() {
     }
   }
 
-  // ── 5. BUDGET ───────────────────────────────────────────────────────────────
+  // ── 5. STEALTHGPT ───────────────────────────────────────────────────────────
+  if (!process.env.STEALTHGPT_API_KEY) {
+    checks.stealthgpt = {
+      ok: false,
+      message: "STEALTHGPT_API_KEY not set",
+      fix: "Add STEALTHGPT_API_KEY to Vercel environment variables and redeploy",
+    };
+  } else {
+    checks.stealthgpt = { ok: true, message: "API key configured" };
+  }
+
+  // ── 6. BUDGET ───────────────────────────────────────────────────────────────
   try {
     const monthly = await blogsDb.getMonthlyUsage();
     const currentMonth = new Date().toISOString().slice(0, 7);

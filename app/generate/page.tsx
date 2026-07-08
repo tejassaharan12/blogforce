@@ -63,7 +63,7 @@ const AGENT_STEPS = [
   { name: "Compliance Pre-Scanner", detail: "Loading CDSCO ruleset · Drug & Cosmetics Act §3.1" },
   { name: "Writing Agent — Pass 1", detail: "Claude Opus 4.8 · Medical accuracy & structure" },
   { name: "Brand Voice Agent — Pass 2", detail: "Claude Opus 4.8 · Humanizing with brand personality" },
-  { name: "Human-Style Editor — Pass 3", detail: "Claude Opus 4.8 · Burstiness · eliminating AI patterns" },
+  { name: "StealthGPT Humanizer", detail: "StealthGPT · AI-detection bypass · burstiness correction" },
   { name: "Plagiarism Scanner", detail: "Copyscape Premium · live web comparison" },
   { name: "SEO Intelligence", detail: "DataForSEO · India search volume & CPC metrics" },
   { name: "Compliance Validator", detail: "Final pharma safety sweep · risk scoring" },
@@ -117,18 +117,17 @@ interface GenerateResult {
     pass1_output: number;
     pass2_input: number;
     pass2_output: number;
-    pass3_input: number;
-    pass3_output: number;
     total: number;
   };
   cost_breakdown: {
     pass1_cost: number;
     pass2_cost: number;
-    pass3_cost: number;
+    stealth_cost: number;
     dataforseo_cost: number;
     copyscape_cost: number;
     total_cost: number;
   };
+  human_score: number;
   cost_inr: number;
   model: string;
 }
@@ -830,13 +829,30 @@ function GeneratePageInner() {
                 </span>
               </div>
 
+              {/* Human Score from StealthGPT */}
+              <div className={clsx("card-glass p-5", result.human_score >= 80 ? "!border-emerald-400/25" : result.human_score >= 50 ? "!border-amber-400/25" : "!border-rose-400/25")}>
+                <div className="flex items-center gap-2 mb-2">
+                  {result.human_score >= 80 ? <CheckCircle className="w-4 h-4 text-emerald-400" /> : result.human_score >= 50 ? <AlertTriangle className="w-4 h-4 text-amber-400" /> : <XCircle className="w-4 h-4 text-rose-400" />}
+                  <span className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">Human Score</span>
+                </div>
+                <p className={clsx("text-2xl font-display font-semibold", result.human_score >= 80 ? "text-emerald-300" : result.human_score >= 50 ? "text-amber-300" : "text-rose-300")}>
+                  {result.human_score}/100
+                </p>
+                <p className="text-xs text-zinc-500 mt-1">
+                  {result.human_score >= 80 ? "Likely passes AI detectors" : result.human_score >= 50 ? "May trigger some detectors" : "High AI detection risk"}
+                </p>
+                <span className="inline-block mt-2 text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full bg-purple-400/10 text-purple-400">
+                  via StealthGPT
+                </span>
+              </div>
+
               <div className="card-glass p-5 !border-gold-400/25">
                 <div className="flex items-center gap-2 mb-2">
                   <span className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">Total Cost</span>
                 </div>
                 <p className="text-2xl font-display font-semibold text-gold-300">₹{result.cost_inr.toFixed(2)}</p>
-                <p className="text-xs text-zinc-500 mt-1.5 font-mono">AI P1+P2: ₹{(result.cost_breakdown.pass1_cost + result.cost_breakdown.pass2_cost).toFixed(3)}</p>
-                <p className="text-xs text-zinc-500 font-mono">Editor P3: ₹{result.cost_breakdown.pass3_cost.toFixed(3)}</p>
+                <p className="text-xs text-zinc-500 mt-1.5 font-mono">AI Writing (P1+P2): ₹{(result.cost_breakdown.pass1_cost + result.cost_breakdown.pass2_cost).toFixed(3)}</p>
+                <p className="text-xs text-zinc-500 font-mono">StealthGPT: ₹{result.cost_breakdown.stealth_cost.toFixed(3)}</p>
                 {result.cost_breakdown.dataforseo_cost > 0 && (
                   <p className="text-xs text-zinc-500 font-mono">DataForSEO: ₹{result.cost_breakdown.dataforseo_cost.toFixed(3)}</p>
                 )}

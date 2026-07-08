@@ -8,6 +8,7 @@ import {
 } from "./compliance";
 import { checkPlagiarism, type PlagiarismResult } from "./plagiarism";
 import { getKeywordMetrics, type KeywordMetric } from "./dataforseo";
+import { humanizeContent } from "./stealth";
 
 const client = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
@@ -18,19 +19,6 @@ const client = new Anthropic({
 const MODEL = "claude-opus-4-8";
 const INPUT_COST_PER_MTok = 1275;
 const OUTPUT_COST_PER_MTok = 6375;
-
-// Claude Haiku 4.5 for Pass 3 (AI-detection bypass) — much cheaper
-// Input: $0.80/MTok = ₹68/MTok  Output: $4/MTok = ₹340/MTok
-const HAIKU_MODEL = "claude-haiku-4-5-20251001";
-const HAIKU_INPUT_COST_PER_MTok = 68;
-const HAIKU_OUTPUT_COST_PER_MTok = 340;
-
-function calcHaikuCost(inputTokens: number, outputTokens: number): number {
-  return (
-    (inputTokens / 1_000_000) * HAIKU_INPUT_COST_PER_MTok +
-    (outputTokens / 1_000_000) * HAIKU_OUTPUT_COST_PER_MTok
-  );
-}
 
 // Monthly budget cap in INR — generation stops and warns if exceeded
 const MONTHLY_BUDGET_CAP_INR = 3000;
@@ -78,19 +66,18 @@ export interface GenerateResult {
     pass1_output: number;
     pass2_input: number;
     pass2_output: number;
-    pass3_input: number;
-    pass3_output: number;
     total: number;
   };
   cost_inr: number;
   cost_breakdown: {
     pass1_cost: number;
     pass2_cost: number;
-    pass3_cost: number;
+    stealth_cost: number;
     dataforseo_cost: number;
     copyscape_cost: number;
     total_cost: number;
   };
+  human_score: number;
   keyword_data: KeywordMetric[];
   model: string;
 }
@@ -420,132 +407,21 @@ ${pass1Content}`;
   const p2OutputTokens = pass2Response.usage.output_tokens;
   const pass2Cost = calcCost(p2InputTokens, p2OutputTokens);
 
-  // ── PASS 3: AI-DETECTION BYPASS (Claude Opus) ───────────────────────────────
-  // Focus: kill every AI phrase, fix burstiness, inject journalist voice
-
-  const pass3System = `You are a senior Indian health journalist with 15 years at Times of India Health and Health Shots. You are also a specialist in identifying and rewriting AI-generated content.
-
-YOUR MISSION: Rewrite the article so it scores 0% on every AI detector — Grammarly, ZeroGPT, GPTZero, Originality.ai. Every single sentence must read as if a real, experienced human journalist wrote it under deadline.
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-STEP 1 — BANNED LIST: FIND AND DESTROY EVERY INSTANCE
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-BANNED PUNCTUATION:
-- Em dash (—) ← THE BIGGEST AI TELL. REMOVE EVERY SINGLE ONE. Replace with a comma, a full stop, or restructure the sentence. Never use — anywhere.
-- Ellipsis (...) overuse → use a full stop instead
-
-BANNED PHRASES — replace every single occurrence, no exceptions:
-"unsung hero/heroes" → describe exactly what it does in plain words
-"unpack" (non-literal) → "look at" / "break down" / "get into"
-"with its own set of" → restructure the sentence without this phrase
-"navigate" (non-literal) → say exactly what the person is doing
-"delve into" → "look at" / "get into"
-"shed light on" → "explain" / "show" / "clarify"
-"it's worth noting" → delete, state the fact directly
-"it is worth noting" → delete, state the fact directly
-"it is important to note" → delete, state the fact directly
-"furthermore" → start a new sentence with the actual point
-"moreover" → same — just make the point
-"additionally" → "Also," or restructure
-"in conclusion" → "So what's the takeaway?" or just state it
-"to summarize" / "in summary" → cut it, just say the point
-"in today's fast-paced world" → delete entirely, start with the actual point
-"in the realm of" → just name the topic
-"when it comes to" → restructure
-"not only that" → "And" or just continue
-"this is where X comes in" → say specifically what X does
-"the good news is" → just state the good news
-"the bottom line is" → just say it
-"at the end of the day" → cut entirely
-"game-changer" / "game changer" → say specifically what changed and how
-"tapestry" (non-literal) → use a real, concrete word
-"symphony" (non-literal) → use a real word
-"holistic" → describe the actual approach in plain terms
-"comprehensive" → "complete" / "full" / describe what it covers
-"robust" → "strong" / "solid" / be specific
-"pivotal" → "key" / say why it matters
-"underscore" as a verb → "show" / "prove" / "make clear"
-"resonate" → "connect with" / say what you actually mean
-"testament to" → "proof that" / "shows that"
-"paramount" → "the most important" / say why
-"multifaceted" → describe the actual parts
-"nuanced" → describe the actual complexity
-"groundbreaking" → say specifically what's new about it
-"revolutionize" → say specifically what changed
-"transformative" → say what actually changed and for whom
-"crucial" (when used more than once) → vary with "important" / "needed" / say why
-"essential" (when overused) → vary or replace
-"vital" (when overused) → vary or replace
-"various" → name the actual things, or use "different"
-"numerous" → use a real number or "many"
-"several" → use a real number or "a few"
-"foster" (non-literal) → "build" / "grow" / "encourage"
-"embrace" (non-literal) → "try" / "adopt" / "use"
-"supercharge" → "boost" / "improve" / be specific
-"leverage" (non-literal) → "use" / "take advantage of"
-"utilise" / "utilize" → "use"
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-STEP 2 — SENTENCE RHYTHM
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-AI writes every sentence at 15-25 words. Same length, every time. Detectors catch this instantly.
-
-Mix it up aggressively:
-- Short sentences: 4-8 words. Drop them after a longer one.
-- Medium sentences: 12-18 words, making one clear point.
-- Long sentences: 25-35 words occasionally, where the thought genuinely needs space to breathe.
-- One-sentence paragraphs work well for impact. Use them.
-- Start sentences with "But", "And", "So", "Because" where it feels natural.
-
-EXAMPLE:
-❌ AI: "Minerals are the unsung heroes of good health. They handle everything from oxygen transport and immunity to bone strength and energy. The tricky part for vegetarians isn't always a lack of minerals in the food."
-✅ Human: "Your body runs on minerals. Not just bone strength — oxygen transport, nerve signals, immune function, the works. And here's what most vegetarians don't realise: it's rarely about how much you eat. It's about how much your body actually absorbs."
-
-Wait. That example used an em dash. Wrong. Here's the corrected version:
-✅ Human: "Your body runs on minerals. Bone strength, yes, but also oxygen transport, nerve signals, immune function. And here's what most vegetarians don't realise: it's rarely about how much you eat. It's about how much your body actually absorbs."
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-STEP 3 — HUMAN VOICE
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-- Contractions everywhere: don't, it's, you're, can't, won't, they're, isn't, aren't, you've
-- Rhetorical questions where natural: "Sound familiar?" / "Know the feeling?" / "Ever checked yours?"
-- Replace vague quantities with real numbers: "many people" → "about 3 in 4 Indians", "most vegetarians" → "close to 70% of vegetarians in India"
-- Write how a journalist talks to a smart reader, not how a textbook explains a topic
-- Use commas and semicolons for pauses; avoid em dashes entirely
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-IRON RULES
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-- Every medical fact, dosage, and claim stays exactly as written
-- All compliance warnings and safety language stays word-for-word
-- All target keywords remain in the text
-- All ## headings and ### subheadings stay unchanged
-- The medical disclaimer at the bottom stays unchanged
-- META_TITLE and META_DESC at the very top stay unchanged
-- Do NOT invent new medical claims or statistics
-- Do NOT use em dashes (—) anywhere in the output`;
-
-  const pass3User = `Rewrite this article following all three steps. Remove every banned phrase, fix sentence rhythm, inject journalist voice. Zero em dashes. Zero AI phrases.
-
-${pass2RawContent}`;
-
-  const pass3Response = await client.messages.create({
-    model: MODEL,
-    max_tokens: 4000,
-    system: pass3System,
-    messages: [{ role: "user", content: pass3User }],
-  });
-
-  const rawContent = (pass3Response.content[0] as { type: string; text: string }).text;
-  const p3InputTokens = pass3Response.usage.input_tokens;
-  const p3OutputTokens = pass3Response.usage.output_tokens;
-  const pass3Cost = calcCost(p3InputTokens, p3OutputTokens);
-
-  // Strip meta lines from visible content — stored in seo.meta_title/meta_description
-  const strippedContent = rawContent
+  // ── STEALTHGPT: AI-DETECTION BYPASS ─────────────────────────────────────────
+  // Strip META lines before sending — StealthGPT must not rewrite them
+  const metaTitleMatch = pass2RawContent.match(/META_TITLE:\s*(.+)/);
+  const metaDescMatch = pass2RawContent.match(/META_DESC:\s*(.+)/);
+  const bodyForStealth = pass2RawContent
     .replace(/^META_TITLE:.*$/m, "")
     .replace(/^META_DESC:.*$/m, "")
+    .replace(/^\n+/, "")
+    .trim();
+
+  const stealthResult = await humanizeContent(bodyForStealth);
+  const stealthCostInr = stealthResult.cost_usd * 85;
+
+  // Strip meta lines from visible content — stored in seo.meta_title/meta_description
+  const strippedContent = stealthResult.content
     .replace(/^\n+/, "")
     .trim();
 
@@ -598,7 +474,7 @@ ${pass2RawContent}`;
     .replace(/  +/g, " ")
     .trim();
 
-  const totalTokens = p1InputTokens + p1OutputTokens + p2InputTokens + p2OutputTokens + p3InputTokens + p3OutputTokens;
+  const totalTokens = p1InputTokens + p1OutputTokens + p2InputTokens + p2OutputTokens;
 
   // ── COMPLIANCE CHECK ────────────────────────────────────────────────────────
   const compliance = checkCompliance(finalContent, req.brand);
@@ -610,7 +486,7 @@ ${pass2RawContent}`;
   const { metrics: keywordData, cost_usd: dfsUsd } = await getKeywordMetrics(req.keywords);
   const dataforseoCostInr = dfsUsd * 85;
   const copyscapeCostInr = plagiarism.cost_usd * 85;
-  const totalCost = pass1Cost + pass2Cost + pass3Cost + dataforseoCostInr + copyscapeCostInr;
+  const totalCost = pass1Cost + pass2Cost + stealthCostInr + dataforseoCostInr + copyscapeCostInr;
 
   // ── SEO ANALYSIS ────────────────────────────────────────────────────────────
   const words = finalContent.split(/\s+/).filter(Boolean);
@@ -624,9 +500,7 @@ ${pass2RawContent}`;
     (k) => !contentLower.includes(k.toLowerCase())
   );
 
-  // Extract meta title/desc from rawContent (before stripping)
-  const metaTitleMatch = rawContent.match(/META_TITLE:\s*(.+)/);
-  const metaDescMatch = rawContent.match(/META_DESC:\s*(.+)/);
+  // META lines already extracted from pass2RawContent above
   const metaTitle = metaTitleMatch?.[1]?.trim() ?? req.topic.substring(0, 60);
   const metaDescription =
     metaDescMatch?.[1]?.trim() ??
@@ -699,19 +573,18 @@ ${pass2RawContent}`;
       pass1_output: p1OutputTokens,
       pass2_input: p2InputTokens,
       pass2_output: p2OutputTokens,
-      pass3_input: p3InputTokens,
-      pass3_output: p3OutputTokens,
       total: totalTokens,
     },
     cost_inr: parseFloat(totalCost.toFixed(4)),
     cost_breakdown: {
       pass1_cost: parseFloat(pass1Cost.toFixed(4)),
       pass2_cost: parseFloat(pass2Cost.toFixed(4)),
-      pass3_cost: parseFloat(pass3Cost.toFixed(4)),
+      stealth_cost: parseFloat(stealthCostInr.toFixed(4)),
       dataforseo_cost: parseFloat(dataforseoCostInr.toFixed(4)),
       copyscape_cost: parseFloat(copyscapeCostInr.toFixed(4)),
       total_cost: parseFloat(totalCost.toFixed(4)),
     },
+    human_score: stealthResult.humanScore,
     keyword_data: keywordData,
     model: MODEL,
   };
