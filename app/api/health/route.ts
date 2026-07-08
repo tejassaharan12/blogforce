@@ -90,7 +90,12 @@ export async function GET(req: Request) {
     }
   }
 
-  // ── 5. STEALTHGPT ───────────────────────────────────────────────────────────
+  // ── 5. RESEND ───────────────────────────────────────────────────────────────
+  checks.resend = process.env.RESEND_API_KEY
+    ? { ok: true, message: "Email alerts configured" }
+    : { ok: false, message: "RESEND_API_KEY not set — error emails will not be sent", fix: "Add RESEND_API_KEY to Vercel environment variables" };
+
+  // ── 6. STEALTHGPT ───────────────────────────────────────────────────────────
   if (!process.env.STEALTHGPT_API_KEY) {
     checks.stealthgpt = {
       ok: false,
