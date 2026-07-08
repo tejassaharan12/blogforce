@@ -62,6 +62,7 @@ async function initSchema() {
     "ALTER TABLE blogs ADD COLUMN schema_json TEXT DEFAULT '{}'",
     "ALTER TABLE blogs ADD COLUMN plagiarism_source TEXT DEFAULT 'ngram'",
     "ALTER TABLE blogs ADD COLUMN keyword_data_json TEXT DEFAULT '[]'",
+    "ALTER TABLE blogs ADD COLUMN human_score INTEGER DEFAULT 0",
   ]) {
     try { await client.execute(col); } catch {}
   }
@@ -91,6 +92,7 @@ export interface Blog {
   url_slug: string;
   schema_json: string;
   keyword_data_json: string;
+  human_score: number;
   created_at: string;
   updated_at: string;
 }
@@ -105,8 +107,8 @@ export const blogsDb = {
         status, compliance_passed, compliance_risk_score, compliance_violations,
         plagiarism_score, plagiarism_passed, plagiarism_source, seo_keywords_found,
         word_count, tokens_used, cost_inr,
-        meta_title, meta_description, url_slug, schema_json, keyword_data_json
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        meta_title, meta_description, url_slug, schema_json, keyword_data_json, human_score
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       args: [
         data.brand, data.topic, data.keywords, data.target_audience,
         data.content_type, data.content, data.status,
@@ -114,7 +116,7 @@ export const blogsDb = {
         data.plagiarism_score, data.plagiarism_passed, data.plagiarism_source ?? "ngram", data.seo_keywords_found,
         data.word_count, data.tokens_used, data.cost_inr,
         data.meta_title, data.meta_description, data.url_slug, data.schema_json,
-        data.keyword_data_json ?? "[]",
+        data.keyword_data_json ?? "[]", data.human_score ?? 0,
       ],
     });
     return Number(result.lastInsertRowid);

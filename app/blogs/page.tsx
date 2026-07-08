@@ -182,7 +182,7 @@ export default function BlogsPage() {
                   </span>
                 </div>
               </div>
-              <div className="flex gap-5 mt-3">
+              <div className="flex gap-4 mt-3 flex-wrap">
                 <span className={clsx("flex items-center gap-1.5 text-xs", blog.compliance_passed ? "text-emerald-400" : "text-rose-400")}>
                   {blog.compliance_passed ? <CheckCircle className="w-3.5 h-3.5" /> : <AlertTriangle className="w-3.5 h-3.5" />}
                   Compliance
@@ -194,6 +194,11 @@ export default function BlogsPage() {
                     : <span className={blog.plagiarism_passed ? "text-emerald-400" : "text-rose-400"}>{blog.plagiarism_score.toFixed(1)}% ✓</span>
                   }
                 </span>
+                {blog.human_score > 0 && (
+                  <span className={clsx("text-xs font-medium", blog.human_score >= 80 ? "text-emerald-400" : blog.human_score >= 50 ? "text-amber-400" : "text-rose-400")}>
+                    Human: {blog.human_score}/100
+                  </span>
+                )}
               </div>
             </div>
           ))}
@@ -208,6 +213,19 @@ export default function BlogsPage() {
                 <p className="text-xs text-zinc-500 mt-1 font-mono">
                   {selected.brand.replace(/_/g, "-")} · {selected.word_count} words
                 </p>
+                <div className="flex gap-3 mt-2">
+                  <span className={clsx("text-[11px] font-semibold px-2 py-0.5 rounded-full", selected.compliance_passed ? "bg-emerald-400/10 text-emerald-400" : "bg-rose-400/10 text-rose-400")}>
+                    {selected.compliance_passed ? "✓ Compliant" : "✗ Non-compliant"}
+                  </span>
+                  {selected.human_score > 0 && (
+                    <span className={clsx("text-[11px] font-semibold px-2 py-0.5 rounded-full", selected.human_score >= 80 ? "bg-emerald-400/10 text-emerald-400" : selected.human_score >= 50 ? "bg-amber-400/10 text-amber-400" : "bg-rose-400/10 text-rose-400")}>
+                      Human {selected.human_score}/100
+                    </span>
+                  )}
+                  <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-purple-400/10 text-purple-400">
+                    ₹{selected.cost_inr.toFixed(2)}
+                  </span>
+                </div>
               </div>
               <div className="flex gap-2 flex-shrink-0">
                 {!selected.compliance_passed && (

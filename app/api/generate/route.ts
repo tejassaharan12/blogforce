@@ -62,6 +62,7 @@ export async function POST(req: NextRequest) {
       url_slug: result.seo.url_slug ?? "",
       schema_json: result.seo.suggested_schema ?? "{}",
       keyword_data_json: JSON.stringify(result.keyword_data ?? []),
+      human_score: result.human_score ?? 0,
     });
 
     return NextResponse.json({ id, ...result }, { status: 200 });
